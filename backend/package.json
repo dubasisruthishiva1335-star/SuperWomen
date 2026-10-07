@@ -1,0 +1,19 @@
+{
+  "name": "superwomen-backend",
+  "version": "1.0.0",
+  "description": "SuperWomen Backend - Rapido Style Engine",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "dependencies": {
+    "@types/node": "^20.11.30",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.3",
+    "mongoose": "^8.24.4",
+    "redis": "^4.6.10",
+    "socket.io": "^4.8.3"
+  }
+}

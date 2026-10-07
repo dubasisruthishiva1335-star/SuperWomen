@@ -1,0 +1,16 @@
+{
+  "name": "SuperWomen Mobility",
+  "short_name": "SuperWomen",
+  "description": "Women-led mobility ecosystem for captains and riders",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FBF3EE",
+  "theme_color": "#A6134D",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M256 32 L460 110 V247 C460 366 370 443 256 475 C142 443 52 366 52 247 V110 Z' fill='%23A6134D'/><path d='M256 146 L182 237 H237 L210 365 L347 201 H274 Z' fill='%23E8A33D'/></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

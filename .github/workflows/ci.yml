@@ -1,0 +1,72 @@
+name: SuperWomen CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  backend-tests:
+    name: Backend Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Integration Tests
+        run: |
+          node server.js &
+          sleep 3
+          node tests/api.test.js
+
+  flutter-captain-build:
+    name: Build Captain Flutter App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: 'stable'
+
+      - name: Install Captain App Dependencies
+        working-directory: ./mobile/captain_app
+        run: flutter pub get
+
+      - name: Build Web Release Bundle
+        working-directory: ./mobile/captain_app
+        run: flutter build web --release
+
+  flutter-rider-build:
+    name: Build Rider Flutter App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: 'stable'
+
+      - name: Install Rider App Dependencies
+        working-directory: ./mobile/rider_app
+        run: flutter pub get
+
+      - name: Build Web Release Bundle
+        working-directory: ./mobile/rider_app
+        run: flutter build web --release

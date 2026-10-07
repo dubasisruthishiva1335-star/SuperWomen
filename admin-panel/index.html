@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuperWomen — Admin Operations & Safety Dispatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  :root {
+    --purple: #6A2CEA;
+    --pink: #FF4F8B;
+    --dark: #13072E;
+    --dark-surface: #1E0E42;
+    --safe: #00C853;
+    --alert: #FF334B;
+    --line: rgba(255, 255, 255, 0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0B0319;
+    color: #FFFFFF;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    padding: 24px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 18px;
+    margin-bottom: 24px;
+  }
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .metric-card {
+    background: var(--dark-surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+  }
+  .metric-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .metric-val.green { color: var(--safe); }
+  .metric-val.red { color: var(--alert); }
+
+  .layout-2col {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 20px;
+  }
+  .panel-box {
+    background: var(--dark-surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 20px;
+  }
+  .panel-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #adminMap {
+    height: 340px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px; color: #B5A5D1; border-bottom: 1px solid var(--line); }
+  td { padding: 12px 10px; border-bottom: 1px solid var(--line); }
+  .btn-approve {
+    background: var(--purple);
+    color: #FFF;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:32px;">🦸♀️</span>
+      <div>
+        <h1 style="font-family:'Space Grotesk'; font-size:24px;">SuperWomen Central Ops & Safety Dispatch</h1>
+        <p style="color:#B5A5D1; font-size:12px;">Real-time Fleet Telemetry · Warangal & Bangalore Metro Zones</p>
+      </div>
+    </div>
+    <div id="adminSosPill" style="background:rgba(0,200,83,0.15); border:1px solid #00C853; color:#00E676; padding:8px 16px; border-radius:100px; font-weight:700; font-size:13px;">
+      🟢 All Systems Secure · 0 Active SOS
+    </div>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div style="font-size:12px; color:#B5A5D1;">Live Active Trips</div>
+      <div class="metric-val">1,842</div>
+    </div>
+    <div class="metric-card">
+      <div style="font-size:12px; color:#B5A5D1;">Online Captains</div>
+      <div class="metric-val green" id="onlineCount">6,204</div>
+    </div>
+    <div class="metric-card">
+      <div style="font-size:12px; color:#B5A5D1;">Pending KYC Approvals</div>
+      <div class="metric-val" id="pendingCount">37</div>
+    </div>
+    <div class="metric-card">
+      <div style="font-size:12px; color:#B5A5D1;">Today's Marketplace GMV</div>
+      <div class="metric-val" style="color:var(--pink);">₹42.8 Lakh</div>
+    </div>
+  </div>
+
+  <div class="layout-2col">
+    <!-- Live Map -->
+    <div class="panel-box">
+      <div class="panel-title">
+        <span>📍 Live Fleet Cluster & Active Rides</span>
+        <span style="font-size:12px; color:#00E676;">GPS Sync: 2s Interval</span>
+      </div>
+      <div id="adminMap"></div>
+    </div>
+
+    <!-- KYC Approval Desk -->
+    <div class="panel-box">
+      <div class="panel-title">
+        <span>📑 Captain KYC Approval Queue</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Captain</th>
+            <th>City</th>
+            <th>Vehicle</th>
+            <th>Documents</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Priya Sharma</b></td>
+            <td>Bangalore</td>
+            <td>TVS Jupiter</td>
+            <td><span style="color:#00E676;">Verified ✓</span></td>
+            <td><span style="color:#B5A5D1;">Active</span></td>
+          </tr>
+          <tr id="rowFarah">
+            <td><b>Farah Sultana</b></td>
+            <td>Warangal</td>
+            <td>Ather 450X</td>
+            <td><span style="color:#FFB800;">Pending DL/RC</span></td>
+            <td><button class="btn-approve" onclick="approveFarah()">Approve ✓</button></td>
+          </tr>
+          <tr>
+            <td><b>Anitha Rajendran</b></td>
+            <td>Chennai</td>
+            <td>Honda Activa</td>
+            <td><span style="color:#00E676;">Verified ✓</span></td>
+            <td><span style="color:#B5A5D1;">Active</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let map;
+    window.addEventListener('DOMContentLoaded', () => {
+      map = L.map('adminMap').setView([12.9352, 77.6245], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+      L.circleMarker([12.9352, 77.6245], { color: '#6A2CEA', fillColor: '#6A2CEA', fillOpacity: 0.9, radius: 8 }).addTo(map).bindPopup("Captain Priya (Online)");
+      L.circleMarker([12.9452, 77.6345], { color: '#FF4F8B', fillColor: '#FF4F8B', fillOpacity: 0.9, radius: 8 }).addTo(map).bindPopup("Active Trip #8821");
+    });
+
+    function approveFarah() {
+      document.getElementById('rowFarah').cells[3].innerHTML = '<span style="color:#00E676;">Verified ✓</span>';
+      document.getElementById('rowFarah').cells[4].innerHTML = '<span style="color:#B5A5D1;">Active</span>';
+      const c = document.getElementById('pendingCount');
+      c.innerText = Math.max(0, parseInt(c.innerText) - 1);
+      alert('Farah Sultana approved and notified via SMS!');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+openapi: 3.0.3
+info:
+  title: SuperWomen Mobility API
+  version: 1.0.0
+  description: Official REST & WebSocket API specification for the SuperWomen mobility ecosystem.
+servers:
+  - url: http://localhost:3000/api
+    description: Local development / mock server
+  - url: https://api.superwomen.app/v1
+    description: Production API Gateway
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: API is operational
+
+  /trips/request:
+    post:
+      summary: Request a new safe ride (Rider)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [riderName, pickup, drop, vehicleType, fare]
+              properties:
+                riderName:
+                  type: string
+                  example: Meera Kumar
+                pickup:
+                  type: string
+                  example: Adyar Gandhi Nagar
+                drop:
+                  type: string
+                  example: Guindy Tech Park
+                vehicleType:
+                  type: string
+                  enum: [SUPER_BIKE, SUPER_CAR, SUPER_XL]
+                fare:
+                  type: number
+                  example: 85
+      responses:
+        '201':
+          description: Trip created and matching initiated
+
+  /safety/sos:
+    post:
+      summary: Trigger emergency SOS alert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [caller, location]
+              properties:
+                caller:
+                  type: string
+                  example: Rider Meera Kumar
+                location:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                      example: 13.0012
+                    lng:
+                      type: number
+                      example: 80.2565
+      responses:
+        '201':
+          description: SOS dispatched to 112 PCR and Ops console
+
+  /admin/metrics:
+    get:
+      summary: Retrieve real-time marketplace metrics
+      responses:
+        '200':
+          description: Current telemetry counters

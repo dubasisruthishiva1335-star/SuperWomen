@@ -1,0 +1,76 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Customer {
+  id    String @id @default(uuid())
+  phone String @unique
+  name  String
+  rides Ride[]
+}
+
+model Captain {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  name      String
+  kycStatus String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  kycDocs   Json?    // { aadhaarUrl, licenseUrl, selfieUrl, rcUrl }
+  isOnline  Boolean  @default(false)
+  vehicle   Vehicle?
+  rides     Ride[]
+  createdAt DateTime @default(now())
+}
+
+model Vehicle {
+  id        String  @id @default(uuid())
+  captainId String  @unique
+  captain   Captain @relation(fields: [captainId], references: [id])
+  number    String
+  model     String
+}
+
+model Ride {
+  id         String    @id @default(uuid())
+  customerId String
+  captainId  String?
+  pickupLat  Float
+  pickupLng  Float
+  dropLat    Float
+  dropLng    Float
+  fare       Float
+  status     String    @default("SEARCHING") // SEARCHING, ACCEPTED, STARTED, COMPLETED, CANCELLED
+  otp        String
+  createdAt  DateTime  @default(now())
+  customer   Customer  @relation(fields: [customerId], references: [id])
+  captain    Captain?  @relation(fields: [captainId], references: [id])
+  payment    Payment?
+  sos        SosEvent[]
+}
+
+model Payment {
+  id                 String   @id @default(uuid())
+  rideId             String   @unique
+  ride               Ride     @relation(fields: [rideId], references: [id])
+  razorpayOrderId    String   @unique
+  razorpayPaymentId  String?
+  amountPaise        Int
+  status             String   @default("CREATED") // CREATED, PAID, FAILED
+  createdAt          DateTime @default(now())
+}
+
+model SosEvent {
+  id         String    @id @default(uuid())
+  rideId     String
+  ride       Ride      @relation(fields: [rideId], references: [id])
+  raisedBy   String    // customer | captain
+  lat        Float
+  lng        Float
+  status     String    @default("OPEN") // OPEN, RESOLVED
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+}

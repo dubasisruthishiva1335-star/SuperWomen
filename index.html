@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuperWomen — 100% Women-to-Women Mobility Platform (Captain & Rider)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<!-- Leaflet CSS for real interactive maps -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  :root {
+    --purple-primary: #6A2CEA;
+    --purple-dark: #1F0E44;
+    --purple-deep: #13072E;
+    --purple-light: #8C52FF;
+    --purple-tint: #F3EBFF;
+    --purple-glow: rgba(106, 44, 234, 0.35);
+    --pink-accent: #FF4F8B;
+    --pink-tint: #FFEBF2;
+    --gold: #FFB800;
+    --gold-tint: #FFF8E7;
+    --safe-green: #00C853;
+    --safe-tint: #E8F8EE;
+    --alert-red: #FF334B;
+    --alert-tint: #FFEAEF;
+    --bg-light: #F8F5FD;
+    --surface: #FFFFFF;
+    --surface-soft: #F9F7FD;
+    --ink: #180D2B;
+    --ink-soft: #635777;
+    --ink-muted: #958AA8;
+    --line: #E8DEFA;
+    --font-main: 'Plus Jakarta Sans', sans-serif;
+    --font-title: 'Space Grotesk', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: #0F0622;
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(106, 44, 234, 0.25) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(255, 79, 139, 0.2) 0%, transparent 40%),
+      linear-gradient(180deg, #13072E 0%, #0A0317 100%);
+    color: #FFFFFF;
+    font-family: var(--font-main);
+    padding: 24px 16px 80px;
+    min-height: 100vh;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; }
+
+  /* TOP BAR */
+  .brand-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .brand-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .app-logo-mark {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #FF4F8B 0%, #6A2CEA 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(106, 44, 234, 0.5);
+    font-size: 24px;
+  }
+  .brand-text h1 {
+    font-family: var(--font-title);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #FFFFFF, #E3D2FF, #FFC1D9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .brand-text p {
+    font-size: 13px;
+    color: #B5A5D1;
+    font-weight: 500;
+  }
+
+  .header-badges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .live-pill {
+    background: rgba(0, 200, 83, 0.15);
+    border: 1px solid rgba(0, 200, 83, 0.4);
+    color: #00E676;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    background: #00E676;
+    border-radius: 50%;
+    animation: pulseGlow 1.5s infinite;
+  }
+  @keyframes pulseGlow {
+    0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(0, 230, 118, 0); }
+    100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+  }
+
+  /* VIEW CONTROLS */
+  .control-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .toggle-group {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 100px;
+    padding: 4px;
+    display: inline-flex;
+  }
+  .toggle-group button {
+    background: transparent;
+    border: none;
+    color: #C7B8E3;
+    padding: 8px 18px;
+    border-radius: 100px;
+    font-family: var(--font-main);
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .toggle-group button.active {
+    background: var(--purple-primary);
+    color: #FFFFFF;
+    box-shadow: 0 4px 14px rgba(106, 44, 234, 0.5);
+  }
+
+  .sim-status-chip {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    color: #D6CAEE;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sim-status-chip b {
+    color: #FF70A3;
+    font-family: var(--font-title);
+  }
+
+  /* STAGE LAYOUT (DUAL PHONE) */
+  .stage-layout {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+
+  .phone-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .phone-label {
+    font-family: var(--font-title);
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: 100px;
+  }
+  .phone-label.captain {
+    background: rgba(106, 44, 234, 0.25);
+    border: 1px solid rgba(106, 44, 234, 0.6);
+    color: #D3B8FF;
+  }
+  .phone-label.rider {
+    background: rgba(255, 79, 139, 0.2);
+    border: 1px solid rgba(255, 79, 139, 0.6);
+    color: #FFB3CE;
+  }
+
+  /* SMARTPHONE CHASSIS */
+  .phone-frame {
+    width: 360px;
+    height: 740px;
+    background: #000000;
+    border-radius: 48px;
+    padding: 10px;
+    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8), 0 0 0 3px #3D226B;
+    position: relative;
+    overflow: hidden;
+  }
+  .phone-island {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 24px;
+    background: #000000;
+    border-radius: 20px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .island-cam { width: 9px; height: 9px; background: #1C152B; border-radius: 50%; margin-right: 10px; }
+  .island-spk { width: 34px; height: 4px; background: #1C152B; border-radius: 2px; }
+
+  .phone-viewport {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-light);
+    border-radius: 40px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    color: var(--ink);
+  }
+
+  .phone-statusbar {
+    height: 42px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 22px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    z-index: 50;
+    background: transparent;
+  }
+  .phone-statusbar.dark { color: #FFFFFF; }
+
+  .phone-body {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+    background: var(--bg-light);
+  }
+  .phone-body::-webkit-scrollbar { display: none; }
+
+  .screen { display: none; height: 100%; }
+  .screen.active { display: flex; flex-direction: column; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+  /* NAVIGATION BAR (RAPIDO STYLE) */
+  .app-bottomnav {
+    height: 64px;
+    background: #FFFFFF;
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding-bottom: 6px;
+    z-index: 50;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+  .nav-item.active { color: var(--purple-primary); }
+  .nav-icon { font-size: 18px; }
+
+  /* SCREEN SELECTION TABS UNDER PHONE */
+  .screen-selector-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 16px;
+    max-width: 360px;
+  }
+  .screen-selector-tabs button {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #D6CAEE;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .screen-selector-tabs button.active {
+    background: var(--purple-primary);
+    border-color: var(--purple-light);
+    color: #FFFFFF;
+    box-shadow: 0 4px 10px rgba(106, 44, 234, 0.4);
+  }
+
+  /* ========================================================================= */
+  /* SCREEN 1: CAPTAIN LOGIN SCREEN (AS IN USER SCREENSHOT) */
+  /* ========================================================================= */
+  .captain-login-bg {
+    background: linear-gradient(180deg, #5314C9 0%, #2A096E 45%, #180340 100%);
+    height: 100%;
+    padding: 30px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    color: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+  }
+  .captain-avatar-hero {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #8C52FF 0%, #5314C9 100%);
+    border: 3px solid #FFB800;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 68px;
+    margin: 10px auto 4px;
+    position: relative;
+  }
+  .captain-hero-title {
+    font-family: var(--font-title);
+    font-size: 24px;
+    font-weight: 800;
+    text-align: center;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .captain-hero-title span { color: #FFB800; }
+  
+  .login-card-white {
+    background: #FFFFFF;
+    border-radius: 24px;
+    padding: 20px 16px;
+    color: var(--ink);
+    width: 100%;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+  }
+  .login-card-white h3 { font-size: 19px; font-weight: 800; margin-bottom: 4px; }
+  .login-card-white p { font-size: 11.5px; color: var(--ink-soft); margin-bottom: 14px; }
+  
+  .phone-input-row {
+    display: flex;
+    align-items: center;
+    background: var(--surface-soft);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .phone-input-row input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    width: 100%;
+    margin-left: 8px;
+  }
+  .otp-row-6 {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .otp-box-digit {
+    width: 42px;
+    height: 48px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--purple-primary);
+    background: #FFFFFF;
+  }
+  .btn-purple-glow {
+    background: var(--purple-primary);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    padding: 13px;
+    width: 100%;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(106, 44, 234, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* ========================================================================= */
+  /* SCREEN 2: CAPTAIN DASHBOARD (RAPIDO MAP STYLE) */
+  /* ========================================================================= */
+  .captain-dashboard-viewport {
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .fullscreen-map {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1;
+  }
+  .captain-top-overlay {
+    position: absolute;
+    top: 48px;
+    left: 14px;
+    right: 14px;
+    z-index: 10;
+  }
+  .online-toggle-banner {
+    background: linear-gradient(135deg, #6A2CEA 0%, #4614A8 100%);
+    border-radius: 18px;
+    padding: 12px 16px;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(106, 44, 234, 0.45);
+  }
+  .online-toggle-switch {
+    width: 52px;
+    height: 28px;
+    background: #00E676;
+    border-radius: 100px;
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    cursor: pointer;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .switch-circle {
+    width: 22px;
+    height: 22px;
+    background: #FFFFFF;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  }
+
+  .captain-bottom-overlay {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    z-index: 10;
+  }
+  .stat-card-3grid {
+    background: #FFFFFF;
+    border-radius: 18px;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    border: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .stat-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .stat-col-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--purple-tint);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+  .stat-col-lbl { font-size: 10.5px; color: var(--ink-soft); font-weight: 600; }
+  .stat-col-val { font-family: var(--font-title); font-size: 16px; font-weight: 800; color: var(--ink); margin-top: 1px; }
+
+  .peak-bonus-chip {
+    background: #F3EBFF;
+    border: 1px solid #D6BCFA;
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--purple-primary);
+  }
+
+  /* ========================================================================= */
+  /* SCREEN 3: NEW RIDE REQUEST (18s LOUD ALERT) */
+  /* ========================================================================= */
+  .ride-alert-container {
+    background: linear-gradient(180deg, #180934 0%, #0F0422 100%);
+    height: 100%;
+    padding: 44px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: #FFFFFF;
+  }
+  .loud-header-banner {
+    background: radial-gradient(circle at center, #7C3AED 0%, #4C1D95 100%);
+    border: 2px solid #A78BFA;
+    border-radius: 20px;
+    padding: 14px;
+    text-align: center;
+    box-shadow: 0 0 35px rgba(124, 58, 237, 0.6);
+  }
+  .bell-shake {
+    font-size: 32px;
+    display: inline-block;
+    animation: ringBell 0.8s infinite;
+  }
+  @keyframes ringBell {
+    0%, 100% { transform: rotate(0); }
+    20%, 60% { transform: rotate(-15deg); }
+    40%, 80% { transform: rotate(15deg); }
+  }
+  .timer-circle-wrap {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 3px solid #FF4F8B;
+    margin: 8px auto 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    box-shadow: 0 0 15px rgba(255, 79, 139, 0.6);
+  }
+  .timer-sec { font-family: var(--font-title); font-size: 22px; font-weight: 800; color: #FFFFFF; }
+
+  .alert-details-card {
+    background: #FFFFFF;
+    border-radius: 20px;
+    padding: 16px;
+    color: var(--ink);
+    margin: 10px 0;
+  }
+  .passenger-badge-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .p-avatar {
+    width: 38px;
+    height: 38px;
+    background: #E9D5FF;
+    color: var(--purple-primary);
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .route-step-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+  .step-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 2px; flex: none; }
+  .step-dot.pickup { background: #00C853; }
+  .step-dot.drop { background: #FF334B; }
+
+  .fare-row-highlight {
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .fare-bold-text { font-family: var(--font-title); font-size: 28px; font-weight: 800; color: var(--purple-primary); }
+
+  .alert-actions-row {
+    display: flex;
+    gap: 10px;
+  }
+  .btn-decline {
+    flex: 1;
+    background: #FFFFFF;
+    color: var(--ink);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .btn-accept-loud {
+    flex: 1.4;
+    background: var(--purple-primary);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(106, 44, 234, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* ========================================================================= */
+  /* SCREEN 4: CAPTAIN EARNINGS WALLET (EXACT USER SCREENSHOT) */
+  /* ========================================================================= */
+  .captain-earnings-view {
+    height: 100%;
+    padding: 44px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .earnings-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .wallet-banner-purple {
+    background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
+    border-radius: 20px;
+    padding: 16px;
+    color: #FFFFFF;
+    box-shadow: 0 10px 25px rgba(124, 58, 237, 0.35);
+    margin-bottom: 12px;
+  }
+  .btn-withdraw-white {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #FFFFFF;
+    border-radius: 12px;
+    padding: 10px;
+    width: 100%;
+    font-weight: 800;
+    font-size: 13.5px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  .weekly-chart-card {
+    background: #FFFFFF;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .chart-bars-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 90px;
+    padding-top: 14px;
+    margin-bottom: 8px;
+  }
+  .bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .bar-stick {
+    width: 22px;
+    background: #C4B5FD;
+    border-radius: 6px;
+    transition: height 0.3s ease;
+  }
+  .bar-stick.today { background: var(--purple-primary); }
+  .bar-label { font-size: 10px; font-weight: 700; color: var(--ink-soft); }
+
+  /* ========================================================================= */
+  /* SCREEN 5: NAVIGATION / OTP START & SOS (CAPTAIN) */
+  /* ========================================================================= */
+  .captain-nav-view {
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .nav-top-banner {
+    position: absolute;
+    top: 48px; left: 14px; right: 14px;
+    z-index: 20;
+    background: #180934;
+    color: #FFFFFF;
+    border-radius: 16px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  }
+  .nav-bottom-sheet {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: #FFFFFF;
+    border-radius: 26px 26px 0 0;
+    padding: 18px 16px 14px;
+    z-index: 20;
+    box-shadow: 0 -10px 35px rgba(0,0,0,0.2);
+  }
+  .otp-prompt-box {
+    background: #F3EBFF;
+    border: 2px dashed var(--purple-primary);
+    border-radius: 14px;
+    padding: 10px;
+    text-align: center;
+    margin: 10px 0;
+  }
+  .otp-digits-bold {
+    font-family: var(--font-title);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--purple-primary);
+    letter-spacing: 6px;
+  }
+  .btn-sos-floating {
+    position: absolute;
+    right: 14px;
+    bottom: 270px;
+    z-index: 30;
+    width: 52px;
+    height: 52px;
+    background: var(--alert-red);
+    color: #FFFFFF;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    box-shadow: 0 6px 20px rgba(255, 51, 75, 0.6);
+    border: 3px solid #FFFFFF;
+    cursor: pointer;
+  }
+
+  /* ========================================================================= */
+  /* RIDER APP: 5 CORE SCREENS (RAPIDO STYLE FOR WOMEN) */
+  /* ========================================================================= */
+  /* Rider 1: Home / Where to go */
+  .rider-home-view {
+    height: 100%;
+    padding: 44px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .rider-brand-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .safety-trust-ribbon {
+    background: linear-gradient(135deg, #FF4F8B 0%, #6A2CEA 100%);
+    border-radius: 16px;
+    padding: 12px 14px;
+    color: #FFFFFF;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 20px rgba(106, 44, 234, 0.25);
+  }
+  .search-destination-box {
+    background: #FFFFFF;
+    border: 1.5px solid var(--line);
+    border-radius: 16px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+    margin-bottom: 14px;
+  }
+  .search-input-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    padding: 6px 0;
+  }
+  .search-input-field input {
+    border: none;
+    outline: none;
+    font-family: var(--font-main);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    width: 100%;
+  }
+
+  /* Rider 2: Choose Ride (SuperBike / SuperAuto / SuperCar) */
+  .vehicle-select-card {
+    background: #FFFFFF;
+    border: 2px solid var(--line);
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .vehicle-select-card.selected {
+    border-color: var(--purple-primary);
+    background: #F8F3FF;
+    box-shadow: 0 6px 16px rgba(106, 44, 234, 0.15);
+  }
+
+  /* Rider 3: Captain Found / Live Ride */
+  .captain-found-header {
+    background: linear-gradient(135deg, #00C853 0%, #008E3A 100%);
+    border-radius: 18px;
+    padding: 14px;
+    color: #FFFFFF;
+    margin-bottom: 12px;
+  }
+
+  /* Rider 5: Rating & Tip */
+  .rating-stars-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    font-size: 32px;
+    color: #FFB800;
+    margin: 14px 0;
+    cursor: pointer;
+  }
+  .tip-chips-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .tip-chip {
+    border: 1.5px solid var(--line);
+    background: #FFFFFF;
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .tip-chip.selected {
+    background: var(--purple-primary);
+    color: #FFFFFF;
+    border-color: var(--purple-primary);
+  }
+
+  /* TOAST NOTIFICATION */
+  .toast-box {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: #180934;
+    color: #FFFFFF;
+    padding: 12px 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 1000;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 4px solid var(--pink-accent);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- TOP HEADER -->
+  <header class="brand-header">
+    <div class="brand-left">
+      <div class="app-logo-mark">🦸♀️</div>
+      <div class="brand-text">
+        <h1>SuperWomen Mobility</h1>
+        <p>100% Women-to-Women Safe Rides · Rapido-Style Captain & Rider Suite</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <div class="live-pill"><span class="live-dot"></span> Live Matching Engine (18s Timeout)</div>
+      <button class="btn-purple-glow" style="padding:8px 16px; width:auto; font-size:12px;" onclick="resetSimulation()">🔄 Reset Simulator</button>
+    </div>
+  </header>
+
+  <!-- VIEW TOGGLES -->
+  <div class="control-strip">
+    <div class="toggle-group" id="viewModeToggle">
+      <button class="active" onclick="setViewMode('dual')">📱📱 Dual Phone Live Sync</button>
+      <button onclick="setViewMode('captain')">🦸♀️ Captain SuperWomen (Driver)</button>
+      <button onclick="setViewMode('rider')">💜 SuperWomen Rider (Passenger)</button>
+    </div>
+    <div class="sim-status-chip">
+      <span>Lifecycle Status:</span>
+      <b id="liveStatusText">Idle · Waiting for Booking Request</b>
+    </div>
+  </div>
+
+  <!-- STAGE LAYOUT -->
+  <div class="stage-layout">
+
+    <!-- ========================================================================= -->
+    <!-- PHONE 1: CAPTAIN SUPERWOMEN APP (RAPIDO STYLE PURPLE THEME) -->
+    <!-- ========================================================================= -->
+    <div class="phone-container" id="captainPhoneCol">
+      <div class="phone-label captain">
+        <span>🦸♀️</span> Captain SuperWomen (Driver App)
+      </div>
+      <div class="phone-frame">
+        <div class="phone-island"><div class="island-cam"></div><div class="island-spk"></div></div>
+        <div class="phone-viewport">
+          <div class="phone-statusbar" id="captainStatusbar"><span>9:41</span><span>5G 🔋 98%</span></div>
+
+          <div class="phone-body">
+
+            <!-- SCREEN 1: LOGIN / OTP -->
+            <div class="screen" id="c-scr-login">
+              <div class="captain-login-bg">
+                <div>
+                  <div class="captain-avatar-hero">🦸♀️</div>
+                  <div class="captain-hero-title">Captain<br><span>SuperWomen</span></div>
+                </div>
+
+                <div class="login-card-white">
+                  <h3>Welcome Back!</h3>
+                  <p>Log in to continue with Captain SuperWomen — Safe rides for you.</p>
+
+                  <div class="phone-input-row">
+                    <span>🇮🇳 +91</span>
+                    <input type="text" value="98 7654 3210" readonly>
+                  </div>
+
+                  <div style="font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:6px;">Enter 6-digit OTP</div>
+                  <div class="otp-row-6">
+                    <div class="otp-box-digit">4</div>
+                    <div class="otp-box-digit">9</div>
+                    <div class="otp-box-digit">7</div>
+                    <div class="otp-box-digit">2</div>
+                    <div class="otp-box-digit">8</div>
+                    <div class="otp-box-digit">0</div>
+                  </div>
+
+                  <button class="btn-purple-glow" onclick="setCaptainScreen('dashboard')">Verify & Login →</button>
+                  <div style="display:flex; justify-content:space-around; font-size:10px; font-weight:700; color:var(--ink-muted); margin-top:12px;">
+                    <span>🛡️ Women-Driven</span>
+                    <span>⭐ 4.9★ 5L+ Rides</span>
+                    <span>📍 30+ Cities</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SCREEN 2: HOME DASHBOARD (ONLINE/OFFLINE MAP) -->
+            <div class="screen active" id="c-scr-dashboard">
+              <div class="captain-dashboard-viewport">
+                <div id="cDashboardMap" class="fullscreen-map"></div>
+
+                <!-- Top Floating Online Toggle Card -->
+                <div class="captain-top-overlay">
+                  <div class="online-toggle-banner">
+                    <div>
+                      <div style="font-size:16px; font-weight:800;" id="cOnlineTitle">You're Online</div>
+                      <div style="font-size:11px; opacity:0.85;" id="cOnlineSubtitle">🟢 Receiving ride requests</div>
+                    </div>
+                    <div class="online-toggle-switch" id="cOnlineSwitch" onclick="toggleCaptainOnline()">
+                      <div class="switch-circle"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bottom Floating Stats & Recent Activity -->
+                <div class="captain-bottom-overlay">
+                  <div class="stat-card-3grid">
+                    <div class="stat-col">
+                      <div class="stat-col-icon">₹</div>
+                      <div class="stat-col-lbl">Today's Earnings</div>
+                      <div class="stat-col-val" id="cDashEarnings">₹1,240</div>
+                    </div>
+                    <div class="stat-col">
+                      <div class="stat-col-icon">🛵</div>
+                      <div class="stat-col-lbl">Rides</div>
+                      <div class="stat-col-val" id="cDashRides">8</div>
+                    </div>
+                    <div class="stat-col">
+                      <div class="stat-col-icon">⏱</div>
+                      <div class="stat-col-lbl">Online Hours</div>
+                      <div class="stat-col-val">4h 22m</div>
+                    </div>
+                  </div>
+
+                  <div class="peak-bonus-chip">
+                    <span>⚡ Peak hours now · +20% bonus on next 2 rides</span>
+                    <span>→</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SCREEN 3: NEW RIDE REQUEST (18s LOUD ALERT) -->
+            <div class="screen" id="c-scr-request">
+              <div class="ride-alert-container">
+                <div class="loud-header-banner">
+                  <div class="bell-shake">🔔</div>
+                  <div style="font-family:var(--font-title); font-size:18px; font-weight:800; text-transform:uppercase;">RIDE REQUEST · INCOMING</div>
+                  <div style="font-size:11.5px; opacity:0.9;">Accept before it goes to another driver!</div>
+                  <div class="timer-circle-wrap">
+                    <div class="timer-sec" id="alertTimerDigit">18s</div>
+                  </div>
+                </div>
+
+                <div class="alert-details-card">
+                  <div class="passenger-badge-row">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                      <div class="p-avatar">P</div>
+                      <div>
+                        <b style="font-size:16px;">Priya</b>
+                        <div style="font-size:11.5px; color:var(--ink-soft);">★ 4.8 · Frequent woman rider</div>
+                      </div>
+                    </div>
+                    <span style="background:var(--purple-tint); color:var(--purple-primary); font-size:11px; font-weight:800; padding:4px 10px; border-radius:100px;">🛵 Bike Ride</span>
+                  </div>
+
+                  <div class="route-step-row">
+                    <div class="step-dot pickup"></div>
+                    <div><b>Pickup · 2.4 km away</b><div style="color:var(--ink-soft);">Koramangala 80ft Rd, near Starbucks</div></div>
+                  </div>
+                  <div class="route-step-row">
+                    <div class="step-dot drop"></div>
+                    <div><b>Drop · 8.7 km</b><div style="color:var(--ink-soft);">Indiranagar Metro Station, HAL 2nd Stage</div></div>
+                  </div>
+
+                  <div class="fare-row-highlight">
+                    <div>
+                      <div style="font-size:11px; color:var(--ink-soft);">Est. Earnings</div>
+                      <div class="fare-bold-text">₹185</div>
+                    </div>
+                    <div style="font-size:11.5px; color:var(--ink-soft); text-align:right;">Cash payment<br>Est. 22 min</div>
+                  </div>
+                </div>
+
+                <div class="alert-actions-row">
+                  <button class="btn-decline" onclick="captainDeclineAlert()">DECLINE</button>
+                  <button class="btn-accept-loud" onclick="captainAcceptAlert()">✓ ACCEPT RIDE</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- SCREEN 4: EARNINGS WALLET -->
+            <div class="screen" id="c-scr-earnings">
+              <div class="captain-earnings-view">
+                <div class="earnings-header-bar">
+                  <b style="font-family:var(--font-title); font-size:20px;">Captain Earnings</b>
+                  <span>👛</span>
+                </div>
+
+                <div class="wallet-banner-purple">
+                  <div style="font-size:12px; opacity:0.85;">Wallet Balance</div>
+                  <div style="font-family:var(--font-title); font-size:32px; font-weight:800; margin:4px 0;">₹2,450</div>
+                  <button class="btn-withdraw-white" onclick="alert('Withdrawal of ₹2,450 sent to UPI ID priya@okaxis')">Withdraw to Bank / UPI</button>
+                </div>
+
+                <div class="weekly-chart-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div><b>Daily Earnings: ₹1,240</b><div style="font-size:11px; color:#00C853; font-weight:700;">▲ +12% vs yesterday</div></div>
+                    <span style="font-size:11.5px; color:var(--ink-soft);">Today · 15 Oct</span>
+                  </div>
+
+                  <!-- Bar Graph -->
+                  <div class="chart-bars-row">
+                    <div class="bar-col"><div class="bar-stick" style="height:35px;"></div><span class="bar-label">Mon</span></div>
+                    <div class="bar-col"><div class="bar-stick" style="height:48px;"></div><span class="bar-label">Tue</span></div>
+                    <div class="bar-col"><div class="bar-stick" style="height:40px;"></div><span class="bar-label">Wed</span></div>
+                    <div class="bar-col"><div class="bar-stick" style="height:55px;"></div><span class="bar-label">Thu</span></div>
+                    <div class="bar-col"><div class="bar-stick" style="height:62px;"></div><span class="bar-label">Fri</span></div>
+                    <div class="bar-col"><div class="bar-stick" style="height:70px;"></div><span class="bar-label">Sat</span></div>
+                    <div class="bar-col"><div class="bar-stick today" style="height:82px;"></div><span class="bar-label" style="color:var(--purple-primary);">Sun</span></div>
+                  </div>
+
+                  <div style="background:var(--purple-tint); border-radius:12px; padding:10px; font-size:12px; color:var(--purple-primary); font-weight:700; display:flex; justify-content:space-between;">
+                    <span>⭐ Incentive Bonus: +₹300 today</span>
+                    <span>5 more for ₹500</span>
+                  </div>
+                </div>
+
+                <div style="font-size:13px; font-weight:800; margin:6px 0;">Transaction History</div>
+                <div style="background:#FFF; border:1px solid var(--line); border-radius:14px; padding:10px; font-size:12px;">
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line);"><span>🟢 Ride Payout #8821</span><b>+ ₹180</b></div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0;"><span>🎁 Daily Incentive Goal</span><b>+ ₹300</b></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SCREEN 5: NAVIGATION / OTP START & SOS -->
+            <div class="screen" id="c-scr-navigation">
+              <div class="captain-nav-view">
+                <div id="cNavMap" class="fullscreen-map"></div>
+
+                <div class="nav-top-banner">
+                  <div><b>Turn Right on 80ft Rd</b><div style="font-size:11px; opacity:0.85;">200m to Pickup · Koramangala</div></div>
+                  <span>🧭</span>
+                </div>
+
+                <div class="btn-sos-floating" onclick="triggerSOS('Captain')">🆘</div>
+
+                <div class="nav-bottom-sheet">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; gap:10px; align-items:center;">
+                      <div class="p-avatar">P</div>
+                      <div><b>Priya</b><div style="font-size:11px; color:var(--ink-soft);">★ 4.8 · Passenger at Gate 2</div></div>
+                    </div>
+                    <button class="btn-purple-glow" style="padding:6px 12px; font-size:12px; width:auto;" onclick="alert('Calling Passenger via Masked Bridge...')">📞 Call</button>
+                  </div>
+
+                  <div class="otp-prompt-box">
+                    <div style="font-size:11.5px; font-weight:700; color:var(--ink-soft);">Ask Passenger for OTP to START Trip</div>
+                    <div class="otp-digits-bold">4 9 7 2</div>
+                  </div>
+
+                  <button class="btn-purple-glow" style="background:#00C853; font-size:15px;" onclick="captainStartTrip()">🚀 START TRIP</button>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /phone-body -->
+
+          <!-- CAPTAIN BOTTOM NAV -->
+          <div class="app-bottomnav" id="captainBottomNav">
+            <div class="nav-item active" onclick="setCaptainScreen('dashboard')"><div class="nav-icon">🏠</div>Home</div>
+            <div class="nav-item" onclick="setCaptainScreen('request')"><div class="nav-icon">🛵</div>Rides</div>
+            <div class="nav-item" onclick="setCaptainScreen('earnings')"><div class="nav-icon">👛</div>Earnings</div>
+            <div class="nav-item" onclick="setCaptainScreen('login')"><div class="nav-icon">👤</div>Profile</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Tab Switchers -->
+      <div class="screen-selector-tabs" id="captainTabsGroup">
+        <button onclick="setCaptainScreen('login')">1. Login / OTP</button>
+        <button class="active" onclick="setCaptainScreen('dashboard')">2. Dashboard</button>
+        <button onclick="setCaptainScreen('request')">3. Loud Alert</button>
+        <button onclick="setCaptainScreen('earnings')">4. Earnings</button>
+        <button onclick="setCaptainScreen('navigation')">5. Navigation / OTP</button>
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- PHONE 2: SUPERWOMEN RIDER APP (PASSENGER APP - 5 SCREENS) -->
+    <!-- ========================================================================= -->
+    <div class="phone-container" id="riderPhoneCol">
+      <div class="phone-label rider">
+        <span>💜</span> SuperWomen Rider (Passenger App)
+      </div>
+      <div class="phone-frame">
+        <div class="phone-island"><div class="island-cam"></div><div class="island-spk"></div></div>
+        <div class="phone-viewport">
+          <div class="phone-statusbar" id="riderStatusbar"><span>9:41</span><span>5G 🔋 94%</span></div>
+
+          <div class="phone-body">
+
+            <!-- RIDER SCREEN 1: WHERE TO GO (HOME) -->
+            <div class="screen active" id="r-scr-home">
+              <div class="rider-home-view">
+                <div class="rider-brand-badge">
+                  <div style="font-family:var(--font-title); font-size:22px; font-weight:800; color:var(--purple-primary);">SuperWomen 💜</div>
+                </div>
+
+                <div class="safety-trust-ribbon">
+                  <div style="font-size:13px; font-weight:800;">🔒 100% Women-Driven Safe Rides</div>
+                  <div style="font-size:11px; opacity:0.9; margin-top:2px;">Only background-verified female captains. Safe at any hour.</div>
+                </div>
+
+                <div class="search-destination-box">
+                  <div class="search-input-field">
+                    <span style="color:#00C853;">🟢</span>
+                    <input type="text" id="riderPickup" value="Koramangala 80ft Rd, Bangalore">
+                  </div>
+                  <div style="height:1px; background:var(--line); margin:4px 0 6px 20px;"></div>
+                  <div class="search-input-field">
+                    <span style="color:#FF334B;">🔴</span>
+                    <input type="text" id="riderDrop" value="Indiranagar Metro Station">
+                  </div>
+                </div>
+
+                <div style="font-size:13px; font-weight:800; margin:8px 0 10px;">Recent Safe Places</div>
+                <div style="background:#FFF; border:1px solid var(--line); border-radius:14px; padding:12px; margin-bottom:12px;">
+                  <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                    <span>🏠</span><div><b>Home</b><div style="font-size:11px; color:var(--ink-soft);">HSR Layout, Sector 2</div></div>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span>💼</span><div><b>Office</b><div style="font-size:11px; color:var(--ink-soft);">Manyata Tech Park, Gate 4</div></div>
+                  </div>
+                </div>
+
+                <button class="btn-purple-glow" onclick="setRiderScreen('choose')">Find Safe Rides →</button>
+              </div>
+            </div>
+
+            <!-- RIDER SCREEN 2: CHOOSE RIDE (SUPERBIKE / SUPERAUTO) -->
+            <div class="screen" id="r-scr-choose">
+              <div class="rider-home-view">
+                <b style="font-family:var(--font-title); font-size:18px; margin-bottom:12px;">Choose Ride Type</b>
+
+                <div class="vehicle-select-card selected" id="rVehBike" onclick="selectRiderVehicle('bike', 185, '🛵 SuperBike')">
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:28px;">🛵</span>
+                    <div>
+                      <b>SuperBike</b>
+                      <div style="font-size:11.5px; color:var(--ink-soft);">Fastest · 3 min away</div>
+                    </div>
+                  </div>
+                  <div style="font-family:var(--font-title); font-size:18px; font-weight:800;">₹185</div>
+                </div>
+
+                <div class="vehicle-select-card" id="rVehAuto" onclick="selectRiderVehicle('auto', 240, '🛺 SuperAuto')">
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:28px;">🛺</span>
+                    <div>
+                      <b>SuperAuto</b>
+                      <div style="font-size:11.5px; color:var(--ink-soft);">Comfort · 5 min away</div>
+                    </div>
+                  </div>
+                  <div style="font-family:var(--font-title); font-size:18px; font-weight:800;">₹240</div>
+                </div>
+
+                <div style="background:#FFF; border:1px solid var(--line); border-radius:14px; padding:12px; margin:10px 0; display:flex; justify-content:space-between; align-items:center;">
+                  <div style="font-size:12.5px;"><b>Payment:</b> Google Pay UPI</div>
+                  <span style="color:var(--purple-primary); font-size:12px; font-weight:800; cursor:pointer;">Change</span>
+                </div>
+
+                <button class="btn-purple-glow" id="btnRiderBook" onclick="riderBookNowRapido()">Book SuperBike (₹185) 🚀</button>
+              </div>
+            </div>
+
+            <!-- RIDER SCREEN 3: CAPTAIN FOUND & ARRIVING -->
+            <div class="screen" id="r-scr-found">
+              <div class="rider-home-view">
+                <div class="captain-found-header">
+                  <div style="font-size:15px; font-weight:800;">Captain Arriving in 3 mins</div>
+                  <div style="font-size:11.5px; opacity:0.9;">Priya is 600m away on TVS Jupiter</div>
+                </div>
+
+                <!-- Captain Card -->
+                <div style="background:#FFF; border:1.5px solid var(--line); border-radius:18px; padding:14px; margin-bottom:12px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div style="display:flex; gap:10px; align-items:center;">
+                      <div style="width:44px; height:44px; border-radius:50%; background:var(--purple-tint); display:flex; align-items:center; justify-content:center; font-size:22px;">👩✈️</div>
+                      <div>
+                        <b style="font-size:15px;">Priya Sharma</b>
+                        <div style="font-size:11.5px; color:var(--ink-soft);">★ 4.94 · 1,420 Safe Trips</div>
+                      </div>
+                    </div>
+                    <span style="background:var(--safe-tint); color:#00C853; font-size:11px; font-weight:800; padding:4px 8px; border-radius:100px;">Verified ✓</span>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:12.5px; border-top:1px solid var(--line); padding-top:8px;">
+                    <span>Vehicle Number</span>
+                    <b style="font-family:var(--font-mono); color:var(--purple-primary);">KA01 AB 4972</b>
+                  </div>
+                </div>
+
+                <!-- OTP Card -->
+                <div style="background:var(--purple-tint); border:2px dashed var(--purple-primary); border-radius:16px; padding:12px; text-align:center; margin-bottom:12px;">
+                  <div style="font-size:11.5px; font-weight:700; color:var(--purple-primary);">Share this OTP with Captain Priya to Start</div>
+                  <div style="font-family:var(--font-title); font-size:28px; font-weight:800; color:var(--purple-primary); letter-spacing:6px; margin-top:2px;">4 9 7 2</div>
+                </div>
+
+                <div style="display:flex; gap:10px;">
+                  <button class="btn-decline" style="font-size:12px;" onclick="alert('Trip tracking link copied & SMS sent to Lakshmi (Mother)')">🔗 Share with Family</button>
+                  <button class="btn-purple-glow" style="font-size:12px; background:var(--alert-red);" onclick="triggerSOS('Rider')">🆘 SOS</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIDER SCREEN 4: LIVE RIDE TRACKING -->
+            <div class="screen" id="r-scr-live">
+              <div class="captain-nav-view">
+                <div id="rLiveMap" class="fullscreen-map"></div>
+
+                <div class="nav-top-banner" style="background:#0F0422;">
+                  <div><b>On the way to Indiranagar</b><div style="font-size:11px; opacity:0.85;">ETA: 14 mins · Speed 32 km/h</div></div>
+                  <span style="background:#00C853; font-size:10px; padding:3px 8px; border-radius:100px;">Safe Zone</span>
+                </div>
+
+                <div class="btn-sos-floating" onclick="triggerSOS('Rider')">🆘</div>
+
+                <div class="nav-bottom-sheet">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div><b>Captain Priya Sharma</b><div style="font-size:11.5px; color:var(--ink-soft);">TVS Jupiter · KA01 AB 4972</div></div>
+                    <span style="font-family:var(--font-title); font-size:18px; font-weight:800; color:var(--purple-primary);">₹185</span>
+                  </div>
+                  <button class="btn-purple-glow" style="background:#00C853;" onclick="setRiderScreen('rating')">🏁 Arrived at Destination</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIDER SCREEN 5: PAYMENT & RATING -->
+            <div class="screen" id="r-scr-rating">
+              <div class="rider-home-view" style="text-align:center;">
+                <div style="width:60px; height:60px; border-radius:50%; background:#E8F8EE; color:#00C853; font-size:30px; display:flex; align-items:center; justify-content:center; margin:10px auto 6px;">✓</div>
+                <b style="font-family:var(--font-title); font-size:22px;">Ride Completed!</b>
+                <div style="font-size:12px; color:var(--ink-soft); margin-bottom:14px;">You arrived safely at Indiranagar Metro</div>
+
+                <div style="background:#FFF; border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:14px;">
+                  <div style="font-size:12px; color:var(--ink-soft);">Total Paid via UPI</div>
+                  <div style="font-family:var(--font-title); font-size:28px; font-weight:800; color:var(--purple-primary);">₹185</div>
+                </div>
+
+                <div style="font-size:13.5px; font-weight:800; margin-bottom:6px;">Rate Captain Priya</div>
+                <div class="rating-stars-row">
+                  <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                </div>
+
+                <div style="font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:8px;">Add a Tip for Captain's Great Service</div>
+                <div class="tip-chips-row">
+                  <div class="tip-chip" onclick="this.classList.toggle('selected')">+ ₹10</div>
+                  <div class="tip-chip selected" onclick="this.classList.toggle('selected')">+ ₹20</div>
+                  <div class="tip-chip" onclick="this.classList.toggle('selected')">+ ₹50</div>
+                </div>
+
+                <button class="btn-purple-glow" onclick="alert('Thank you! Rating and Tip submitted.'); setRiderScreen('home');">Submit & Done ✓</button>
+              </div>
+            </div>
+
+          </div><!-- /phone-body -->
+
+          <!-- RIDER BOTTOM NAV -->
+          <div class="app-bottomnav" id="riderBottomNav">
+            <div class="nav-item active" onclick="setRiderScreen('home')"><div class="nav-icon">🏠</div>Home</div>
+            <div class="nav-item" onclick="setRiderScreen('choose')"><div class="nav-icon">🛵</div>Rides</div>
+            <div class="nav-item" onclick="setRiderScreen('found')"><div class="nav-icon">📍</div>Live</div>
+            <div class="nav-item" onclick="setRiderScreen('rating')"><div class="nav-icon">⭐</div>Rating</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Tab Switchers -->
+      <div class="screen-selector-tabs" id="riderTabsGroup">
+        <button class="active" onclick="setRiderScreen('home')">1. Where to go</button>
+        <button onclick="setRiderScreen('choose')">2. Choose Ride</button>
+        <button onclick="setRiderScreen('found')">3. Captain Found</button>
+        <button onclick="setRiderScreen('live')">4. Live Tracking</button>
+        <button onclick="setRiderScreen('rating')">5. Rating & Tip</button>
+      </div>
+    </div>
+
+  </div><!-- /stage-layout -->
+
+</div><!-- /container -->
+
+<!-- AUDIO ENGINE & SIMULATOR LOGIC -->
+<script>
+  let cMap, cNavMap, rLiveMap;
+  let alertTimerInterval;
+
+  function initMaps() {
+    const kora = [12.9352, 77.6245]; // Koramangala, Bangalore
+
+    if (document.getElementById('cDashboardMap') && !cMap) {
+      cMap = L.map('cDashboardMap', { zoomControl: false }).setView(kora, 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(cMap);
+      L.circleMarker(kora, { color: '#6A2CEA', fillColor: '#6A2CEA', fillOpacity: 0.9, radius: 9 }).addTo(cMap);
+    }
+
+    if (document.getElementById('cNavMap') && !cNavMap) {
+      cNavMap = L.map('cNavMap', { zoomControl: false }).setView(kora, 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(cNavMap);
+      L.marker(kora).addTo(cNavMap);
+    }
+
+    if (document.getElementById('rLiveMap') && !rLiveMap) {
+      rLiveMap = L.map('rLiveMap', { zoomControl: false }).setView(kora, 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(rLiveMap);
+      L.marker(kora).addTo(rLiveMap);
+    }
+  }
+
+  function setCaptainScreen(id) {
+    ['login', 'dashboard', 'request', 'earnings', 'navigation'].forEach(s => {
+      const el = document.getElementById('c-scr-' + s);
+      if (el) el.classList.toggle('active', s === id);
+    });
+    const buttons = document.querySelectorAll('#captainTabsGroup button');
+    const screens = ['login', 'dashboard', 'request', 'earnings', 'navigation'];
+    buttons.forEach((b, idx) => b.classList.toggle('active', screens[idx] === id));
+
+    if (id === 'dashboard' && cMap) setTimeout(() => cMap.invalidateSize(), 150);
+    if (id === 'navigation' && cNavMap) setTimeout(() => cNavMap.invalidateSize(), 150);
+  }
+
+  function setRiderScreen(id) {
+    ['home', 'choose', 'found', 'live', 'rating'].forEach(s => {
+      const el = document.getElementById('r-scr-' + s);
+      if (el) el.classList.toggle('active', s === id);
+    });
+    const buttons = document.querySelectorAll('#riderTabsGroup button');
+    const screens = ['home', 'choose', 'found', 'live', 'rating'];
+    buttons.forEach((b, idx) => b.classList.toggle('active', screens[idx] === id));
+
+    if (id === 'live' && rLiveMap) setTimeout(() => rLiveMap.invalidateSize(), 150);
+  }
+
+  function setViewMode(mode) {
+    const cCol = document.getElementById('captainPhoneCol');
+    const rCol = document.getElementById('riderPhoneCol');
+    const btns = document.querySelectorAll('#viewModeToggle button');
+    btns.forEach(b => b.classList.remove('active'));
+
+    if (mode === 'dual') {
+      cCol.style.display = 'flex';
+      rCol.style.display = 'flex';
+      btns[0].classList.add('active');
+    } else if (mode === 'captain') {
+      cCol.style.display = 'flex';
+      rCol.style.display = 'none';
+      btns[1].classList.add('active');
+    } else if (mode === 'rider') {
+      cCol.style.display = 'none';
+      rCol.style.display = 'flex';
+      btns[2].classList.add('active');
+    }
+  }
+
+  // Cross-App Rapido-style Booking Simulation
+  function riderBookNowRapido() {
+    document.getElementById('liveStatusText').innerText = 'Matching nearest Captain... 🛵';
+    showToast('📡 Booking broadcast sent to nearby Captains!');
+
+    // Trigger Captain 18s Loud Alert Screen
+    setCaptainScreen('request');
+    let seconds = 18;
+    const timerEl = document.getElementById('alertTimerDigit');
+    clearInterval(alertTimerInterval);
+    alertTimerInterval = setInterval(() => {
+      seconds--;
+      timerEl.innerText = seconds + 's';
+      if (seconds <= 0) {
+        clearInterval(alertTimerInterval);
+        captainDeclineAlert();
+      }
+    }, 1000);
+  }
+
+  function captainAcceptAlert() {
+    clearInterval(alertTimerInterval);
+    showToast('✅ Captain Priya ACCEPTED the ride! OTP Generated: 4972');
+    document.getElementById('liveStatusText').innerText = 'Captain Assigned · OTP 4972 Verification';
+
+    setCaptainScreen('navigation');
+    setRiderScreen('found');
+  }
+
+  function captainDeclineAlert() {
+    clearInterval(alertTimerInterval);
+    showToast('Ride request declined. Passing to next captain.');
+    setCaptainScreen('dashboard');
+    document.getElementById('liveStatusText').innerText = 'Idle';
+  }
+
+  function captainStartTrip() {
+    showToast('🚀 OTP 4972 Verified! Live Ride Active.');
+    document.getElementById('liveStatusText').innerText = 'Live Ride in Progress (ETA 14m)';
+    setRiderScreen('live');
+  }
+
+  function triggerSOS(role) {
+    alert(`🚨 HIGH PRIORITY SOS ALERT: Triggered by ${role}! 112 Police Command Room & Family SMS Notified.`);
+  }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast-box';
+    t.innerHTML = `<span>⚡</span> ${msg}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+  }
+
+  function resetSimulation() {
+    clearInterval(alertTimerInterval);
+    setCaptainScreen('dashboard');
+    setRiderScreen('home');
+    document.getElementById('liveStatusText').innerText = 'Idle · Waiting for Booking Request';
+    showToast('Simulator reset to home state.');
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    initMaps();
+  });
+</script>
+
+</body>
+</html>

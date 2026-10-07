@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: superwomen_api
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - DATABASE_URL=postgres://superwomen:superwomen123@postgres:5432/superwomen_db
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: superwomen_postgres
+    environment:
+      POSTGRES_USER: superwomen
+      POSTGRES_PASSWORD: superwomen123
+      POSTGRES_DB: superwomen_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: superwomen_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  pgdata:

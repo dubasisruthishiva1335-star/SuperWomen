@@ -1,0 +1,27 @@
+{
+  "name": "superwomen-platform",
+  "version": "1.0.0",
+  "description": "SuperWomen women mobility platform - Real-time matching, GPS telemetry, SOS dispatch, and admin console",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "women-mobility",
+    "ridesharing",
+    "safety",
+    "realtime",
+    "geospatial"
+  ],
+  "author": "SuperWomen Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

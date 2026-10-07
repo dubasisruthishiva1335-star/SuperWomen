@@ -1,0 +1,12 @@
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#faf7fb;color:#222}
+nav{display:flex;gap:20px;align-items:center;padding:14px 24px;background:#7b1fa2;color:#fff}nav a{color:#fff;text-decoration:none}
+main{padding:24px;max-width:1200px;margin:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 4px #0002}
+.stat{font-size:32px;font-weight:700}.red{color:#c62828}
+button{border:0;border-radius:8px;padding:8px 14px;cursor:pointer;color:#fff;background:#7b1fa2}
+button.ok{background:#2e7d32}button.no{background:#c62828}button.grey{background:#666}
+input{padding:10px;border:1px solid #ccc;border-radius:8px;width:100%;margin:6px 0}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.alert{background:#ffebee;border:2px solid #c62828;animation:pulse 1s infinite alternate}
+@keyframes pulse{to{background:#fff}}
