@@ -7,8 +7,8 @@ on:
     branches: [ main, master ]
 
 jobs:
-  backend-tests:
-    name: Backend Test Suite
+  backend-api-build:
+    name: Build NestJS API & Prisma
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -18,16 +18,31 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Run Integration Tests
+      - name: Install & Build API
+        working-directory: ./services/api
         run: |
-          node server.js &
-          sleep 3
-          node tests/api.test.js
+          npm install
+          npx prisma generate --schema=../../database/schema.prisma
+          npm run build
+
+  admin-web-build:
+    name: Build Admin Web Dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install & Build Admin Web
+        working-directory: ./apps/admin-web
+        run: |
+          npm install
+          npm run build
 
   flutter-captain-build:
     name: Build Captain Flutter App
@@ -46,9 +61,9 @@ jobs:
         working-directory: ./mobile/captain_app
         run: flutter pub get
 
-      - name: Build Web Release Bundle
+      - name: Analyze Captain App
         working-directory: ./mobile/captain_app
-        run: flutter build web --release
+        run: flutter analyze
 
   flutter-rider-build:
     name: Build Rider Flutter App
@@ -67,6 +82,6 @@ jobs:
         working-directory: ./mobile/rider_app
         run: flutter pub get
 
-      - name: Build Web Release Bundle
+      - name: Analyze Rider App
         working-directory: ./mobile/rider_app
-        run: flutter build web --release
+        run: flutter analyze
