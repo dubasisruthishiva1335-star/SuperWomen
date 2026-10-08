@@ -14,6 +14,7 @@ export class RealtimeGateway implements OnGatewayConnection {
       socket.data.user = u;
       socket.join(`${u.role}:${u.sub}`);
       if (u.role === 'admin') socket.join('admins');
+      if (u.role === 'captain') socket.join('captains:all');
     } catch { socket.disconnect(); }
   }
 
@@ -30,7 +31,9 @@ export class RealtimeGateway implements OnGatewayConnection {
     const c = await this.prisma.captain.findUnique({ where: { id: u.sub } });
     if (c?.kycStatus !== 'APPROVED') return s.emit('error_msg', 'KYC not approved');
     await this.prisma.captain.update({ where: { id: c.id }, data: { isOnline: true } });
+    s.join('captains:all');
     await this.setLoc(c.id, b.lat, b.lng);
+    s.emit('online_success', { isOnline: true });
   }
 
   @SubscribeMessage('captain:location')
@@ -45,13 +48,19 @@ export class RealtimeGateway implements OnGatewayConnection {
   async offline(@ConnectedSocket() s: Socket) {
     const u = s.data.user;
     if (u?.role !== 'captain') return;
-    await this.redis.zrem('captains:online', u.sub);
+    try {
+      await this.redis.zrem('captains:online', u.sub);
+    } catch {}
+    s.leave('captains:all');
     await this.prisma.captain.update({ where: { id: u.sub }, data: { isOnline: false } });
+    s.emit('offline_success', { isOnline: false });
   }
 
   // heartbeat key expires in 30s so disconnected captains stop receiving rides
   private async setLoc(id: string, lat: number, lng: number) {
-    await this.redis.geoadd('captains:online', lng, lat, id);
-    await this.redis.set(`captain:alive:${id}`, '1', 'EX', 30);
+    try {
+      await this.redis.geoadd('captains:online', lng, lat, id);
+      await this.redis.set(`captain:alive:${id}`, '1', 'EX', 30);
+    } catch {}
   }
 }

@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../constants/app_theme.dart';
+import '../services/captain_ride_service.dart';
+import '../services/captain_socket_service.dart';
+import 'navigation_screen.dart';
 
 class CaptainDashboardScreen extends StatefulWidget {
   const CaptainDashboardScreen({super.key});
@@ -14,10 +17,48 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
   double todayEarnings = 1240.0;
   int todayRides = 8;
   String onlineHours = "4h 22m";
+  final CaptainSocketService _socketService = CaptainSocketService();
 
-  void _showRideRequestAlert() {
+  @override
+  void initState() {
+    super.initState();
+    _initSocket();
+  }
+
+  Future<void> _initSocket() async {
+    await _socketService.connect();
+    if (isOnline) {
+      _socketService.goOnline(12.9716, 77.5946);
+    }
+
+    _socketService.onRideRequest = (ride) {
+      if (mounted) {
+        _showIncomingRideModal(ride);
+      }
+    };
+
+    _socketService.onPaymentReceived = (data) {
+      if (mounted) {
+        final amt = (data['amount'] as num?)?.toDouble() ?? 185.0;
+        setState(() {
+          todayEarnings += amt;
+          todayRides++;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppTheme.safeGreen,
+            content: Text("🎉 ₹${amt.toInt()} Payment Received via UPI!"),
+          ),
+        );
+      }
+    };
+  }
+
+  void _showIncomingRideModal(Map<String, dynamic> ride) {
     int secondsLeft = 18;
     Timer? timer;
+    final rideId = ride['id'] ?? '';
+    final fare = (ride['fare'] as num?)?.toDouble() ?? 185.0;
 
     showModalBottomSheet(
       context: context,
@@ -63,7 +104,7 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                             Text("🔔", style: TextStyle(fontSize: 22)),
                             SizedBox(width: 8),
                             Text(
-                              "RIDE REQUEST · INCOMING",
+                              "NEW RIDE REQUEST",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
@@ -72,7 +113,6 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                             ),
                           ],
                         ),
-                        // 18s Countdown Pill
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
@@ -109,14 +149,14 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                               children: [
                                 CircleAvatar(
                                   backgroundColor: AppTheme.purpleTint,
-                                  child: Text("P", style: TextStyle(color: AppTheme.primaryPurple, fontWeight: FontWeight.bold)),
+                                  child: Text("R", style: TextStyle(color: AppTheme.primaryPurple, fontWeight: FontWeight.bold)),
                                 ),
                                 SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Priya", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                    Text("★ 4.8 · Frequent rider", style: TextStyle(color: AppTheme.inkSoft, fontSize: 12)),
+                                    Text("Passenger", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                    Text("★ 4.9 · Verified Woman Rider", style: TextStyle(color: AppTheme.inkSoft, fontSize: 12)),
                                   ],
                                 ),
                               ],
@@ -127,7 +167,7 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                                 color: AppTheme.purpleTint,
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Text("🛵 Bike Ride", style: TextStyle(color: AppTheme.primaryPurple, fontWeight: FontWeight.bold, fontSize: 11)),
+                              child: const Text("🛵 SuperBike", style: TextStyle(color: AppTheme.primaryPurple, fontWeight: FontWeight.bold, fontSize: 11)),
                             ),
                           ],
                         ),
@@ -137,7 +177,7 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                             Icon(Icons.circle, color: AppTheme.safeGreen, size: 12),
                             SizedBox(width: 8),
                             Expanded(
-                              child: Text("Pickup · 2.4 km away (Koramangala 80ft Rd)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              child: Text("Pickup: Koramangala 80ft Rd", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                             ),
                           ],
                         ),
@@ -147,16 +187,16 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                             Icon(Icons.circle, color: AppTheme.alertRed, size: 12),
                             SizedBox(width: 8),
                             Expanded(
-                              child: Text("Drop · 8.7 km (Indiranagar Metro Station)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              child: Text("Drop: Indiranagar Metro Station", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                             ),
                           ],
                         ),
                         const Divider(height: 20),
-                        const Row(
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("Est. Earnings", style: TextStyle(color: AppTheme.inkSoft, fontSize: 13)),
-                            Text("₹185", style: TextStyle(color: AppTheme.primaryPurple, fontSize: 26, fontWeight: FontWeight.w900)),
+                            const Text("Est. Earnings", style: TextStyle(color: AppTheme.inkSoft, fontSize: 13)),
+                            Text("₹${fare.toInt()}", style: const TextStyle(color: AppTheme.primaryPurple, fontSize: 26, fontWeight: FontWeight.w900)),
                           ],
                         ),
                       ],
@@ -191,14 +231,28 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
-                          onPressed: () {
+                          onPressed: () async {
                             timer?.cancel();
                             Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Ride Accepted! Navigate to Koramangala pickup.")),
-                            );
+                            try {
+                              final acceptedRide = await CaptainRideService.acceptRide(rideId);
+                              if (context.mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CaptainNavigationScreen(ride: acceptedRide),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(backgroundColor: AppTheme.alertRed, content: Text(e.toString())),
+                                );
+                              }
+                            }
                           },
-                          child: const Text("✓ ACCEPT RIDE", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                          child: const Text("✓ ACCEPT RIDE", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Colors.white)),
                         ),
                       ),
                     ],
@@ -217,7 +271,7 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Map Placeholder (Integrates GoogleMaps / OlaMaps in production)
+          // Map Background
           Container(
             color: const Color(0xFFE8DEFA),
             child: const Center(
@@ -225,7 +279,7 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.location_on, color: AppTheme.primaryPurple, size: 48),
-                  Text("Rapido-style Map View Active", style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryPurple)),
+                  Text("Live Map · Ready for Requests", style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryPurple)),
                 ],
               ),
             ),
@@ -240,12 +294,8 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(colors: [AppTheme.primaryPurple, Color(0xFF4614A8)]),
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryPurple.withOpacity(0.4),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                    ),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 6)),
                   ],
                 ),
                 child: Row(
@@ -271,6 +321,11 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                       activeTrackColor: AppTheme.safeGreen,
                       onChanged: (val) {
                         setState(() => isOnline = val);
+                        if (val) {
+                          _socketService.goOnline(12.9716, 77.5946);
+                        } else {
+                          _socketService.goOffline();
+                        }
                       },
                     ),
                   ],
@@ -279,7 +334,7 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
             ),
           ),
 
-          // Bottom Stats & Test Alert Button
+          // Bottom Stats & Simulation Option
           Positioned(
             bottom: 20,
             left: 16,
@@ -292,8 +347,8 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 4)),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 4)),
                     ],
                   ),
                   child: Row(
@@ -307,17 +362,27 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                // Button to simulate incoming 18s loud ride request
+                // Button to simulate an incoming ride locally
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF13072E),
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     icon: const Icon(Icons.notifications_active, color: AppTheme.accentPink),
-                    label: const Text("Simulate Incoming Ride Request (18s Alert)", style: TextStyle(color: Colors.white)),
-                    onPressed: _showRideRequestAlert,
+                    label: const Text("Simulate Incoming Ride Request (Test)", style: TextStyle(color: Colors.white)),
+                    onPressed: () {
+                      _showIncomingRideModal({
+                        'id': 'simulated-ride-123',
+                        'fare': 185.0,
+                        'pickupLat': 12.9716,
+                        'pickupLng': 77.5946,
+                        'dropLat': 12.9784,
+                        'dropLng': 77.6408,
+                      });
+                    },
                   ),
                 ),
               ],

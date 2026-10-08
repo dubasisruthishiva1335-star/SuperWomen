@@ -21,9 +21,25 @@ export class RidesService {
       customerId, pickupLat: d.pickupLat, pickupLng: d.pickupLng, dropLat: d.dropLat, dropLng: d.dropLng,
       fare: this.fare(d), otp: String(randomInt(1000, 10000)),
     } });
-    const near = (await this.redis.georadius('captains:online', d.pickupLng, d.pickupLat, 5, 'km', 'ASC')) as string[];
     const { otp, ...publicRide } = ride; // never send OTP to captains
-    for (const id of near) if (await this.redis.exists(`captain:alive:${id}`)) this.rt.emitTo(`captain:${id}`, 'ride_request', publicRide);
+    let dispatched = false;
+    try {
+      const near = (await this.redis.georadius('captains:online', d.pickupLng, d.pickupLat, 10, 'km', 'ASC')) as string[];
+      for (const id of near) {
+        if (await this.redis.exists(`captain:alive:${id}`)) {
+          this.rt.emitTo(`captain:${id}`, 'ride_request', publicRide);
+          dispatched = true;
+        }
+      }
+    } catch {}
+
+    if (!dispatched) {
+      const onlineCaptains = await this.prisma.captain.findMany({ where: { isOnline: true } });
+      for (const cap of onlineCaptains) {
+        this.rt.emitTo(`captain:${cap.id}`, 'ride_request', publicRide);
+      }
+    }
+    this.rt.emitTo('captains:all', 'ride_request', publicRide);
     return ride;
   }
 
