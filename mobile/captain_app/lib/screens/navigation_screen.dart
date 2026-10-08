@@ -52,10 +52,17 @@ class _CaptainNavigationScreenState extends State<CaptainNavigationScreen> {
         );
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _rideStage = 'STARTED';
+        _isLoading = false;
+      });
       if (mounted) {
+        Navigator.of(context).pop(); // close OTP dialog
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(backgroundColor: AppTheme.alertRed, content: Text(e.toString())),
+          const SnackBar(
+            backgroundColor: AppTheme.safeGreen,
+            content: Text("Ride Started! Navigate to Destination Drop."),
+          ),
         );
       }
     }
@@ -144,10 +151,37 @@ class _CaptainNavigationScreenState extends State<CaptainNavigationScreen> {
         );
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _rideStage = 'COMPLETED';
+        _isLoading = false;
+      });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(backgroundColor: AppTheme.alertRed, content: Text(e.toString())),
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: const Text("🎉 Ride Completed!"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Total Fare: ₹${_fare.toInt()}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.primaryPurple)),
+                const SizedBox(height: 8),
+                const Text("Customer has been prompted for Razorpay / UPI payment. You will receive an instant credit notification."),
+              ],
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryPurple),
+                onPressed: () {
+                  Navigator.pop(context); // dialog
+                  Navigator.pushReplacementNamed(context, '/dashboard');
+                },
+                child: const Text("Return to Dashboard"),
+              ),
+            ],
+          ),
         );
       }
     }

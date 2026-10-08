@@ -246,8 +246,11 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
                               }
                             } catch (e) {
                               if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(backgroundColor: AppTheme.alertRed, content: Text(e.toString())),
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CaptainNavigationScreen(ride: ride),
+                                  ),
                                 );
                               }
                             }
