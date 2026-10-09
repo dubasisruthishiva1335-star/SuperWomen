@@ -1,19 +1,19 @@
-# 🦸♀️ SuperWomen — India's Premier Women-to-Women Mobility Platform
+# 🦸‍♀️ SuperWomen — India's Premier Women-to-Women Mobility Platform
 
-> **SuperWomen** is India's dedicated two-app mobility ecosystem for women — empowering women captains to drive and earn with safety and financial independence, while providing women riders with 100% verified, trusted rides.
+> **SuperWomen** is an Uber-like, women-dedicated mobility and safety ecosystem designed for high-trust urban transit. It connects verified women captains with women passengers, backed by automated dispatch, live Google Maps tracking, real-time SOS safety alerts, and instant wallet settlements.
 
 ---
 
-## 📱 Mobile Applications & Compiled APKs
+## 📱 Mobile Applications & Compiled Release APKs
 
-Both native Android production builds are pre-compiled and ready in the [`apks/`](file:///c:/Users/dubas/Desktop/SuperWomen/apks) directory:
+Optimized release APKs are compiled, signed, and ready for device testing:
 
-| Application | APK Package | Size | Key Capabilities |
-| :--- | :--- | :---: | :--- |
-| **Captain SuperWomen** | [`apks/CaptainSuperWomen.apk`](file:///c:/Users/dubas/Desktop/SuperWomen/apks/CaptainSuperWomen.apk) | ~152 MB | Online/Offline toggle, 18-sec loud incoming ride alert, Leaflet turn-by-turn routing, OTP verification (`4972`), daily earnings wallet & instant UPI payouts, 1-tap SOS |
-| **SuperWomen Rider** | [`apks/SuperWomenRider.apk`](file:///c:/Users/dubas/Desktop/SuperWomen/apks/SuperWomenRider.apk) | ~150 MB | Location search, SuperBike / SuperAuto vehicle selection, Captain matching radar, live GPS tracking & family share, secure OTP display, UPI & cash settlements, 5-star rating |
+| Application | Package File | Target Architecture | Size | Key Capabilities |
+| :--- | :--- | :---: | :---: | :--- |
+| **SuperWomen Rider** | [`apks/SuperWomenRider.apk`](file:///c:/Users/dubas/Desktop/SuperWomen/apks/SuperWomenRider.apk) | ARM64 (`arm64-v8a`) | **18.85 MB** | Google Places search, fare quotes, live captain radar, OTP start display, 1-tap SOS, family share, UPI/Cash payments |
+| **Captain SuperWomen** | [`apks/CaptainSuperWomen.apk`](file:///c:/Users/dubas/Desktop/SuperWomen/apks/CaptainSuperWomen.apk) | ARM64 (`arm64-v8a`) | **18.39 MB** | Online/Offline toggle, atomic dispatch acceptance, turn-by-turn navigation, start OTP verification, 80% wallet earnings |
 
-### 📲 Install via ADB on Android Device:
+### 📲 Install via ADB:
 ```bash
 # Install Captain App
 adb install apks/CaptainSuperWomen.apk
@@ -24,79 +24,55 @@ adb install apks/SuperWomenRider.apk
 
 ---
 
-## 🚀 Quick Start & Development Servers
+## 🌐 Live Cloud Web Services
 
-### 1-Click Launch (Windows)
-Double-click [`run_dev.bat`](file:///c:/Users/dubas/Desktop/SuperWomen/run_dev.bat) to spin up all servers and open browser dashboards automatically.
+- **Live Admin Portal (Vercel):** [https://super-women.vercel.app](https://super-women.vercel.app)
+  - **Live Dispatch Radar:** `/admin/live-map`
+  - **Emergency SOS Center:** `/admin/sos`
+  - **Driver KYC Management:** `/kyc`
+  - **Public Trip Tracking:** `/track/[token]`
+- **Local API Gateway:** `http://localhost:3000/v1`
+- **Interactive Swagger Documentation:** [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
+- **GitHub Repository:** [https://github.com/dubasisruthishiva1335-star/SuperWomen](https://github.com/dubasisruthishiva1335-star/SuperWomen)
 
-### Manual Launch
+---
 
-#### 1. Core Backend Matching Engine (Port 5000)
-```bash
-cd backend
-npm install
-node src/app.js
+## 🏗️ Production Architecture & Tech Stack
+
 ```
-
-#### 2. Interactive Dual-Simulator & Web Server (Port 3000)
-```bash
-npm install
-node server.js
-```
-
-#### 3. Run Automated Integration Test Suite
-```bash
-node tests/test_backend.js
+superwomen/
+├── apps/
+│   └── admin-web/               # Next.js 14 + Tailwind + Google Maps Dashboard
+├── services/
+│   └── api/                     # NestJS + TypeScript Modular Monolith
+│       ├── src/
+│       │   ├── auth/            # Phone OTP + Firebase verification + JWT
+│       │   ├── rides/           # State machine, quotes, and atomic dispatch
+│       │   ├── captains/        # Onboarding, KYC, and earnings
+│       │   ├── maps/            # Google Places Autocomplete, Geocoding, Routes
+│       │   ├── safety/          # SOS emergency engine & trusted contact broadcast
+│       │   ├── payments/        # Razorpay integration & webhook signature verification
+│       │   └── realtime/        # WebSockets (Socket.io) live updates
+│       └── prisma/              # Prisma schema & PostgreSQL ORM
+├── mobile/
+│   ├── rider_app/               # Flutter Rider app (<20 MB)
+│   └── captain_app/             # Flutter Captain app (<20 MB)
+└── apks/                        # Production release APKs
 ```
 
 ---
 
-## 🌐 Live URLs & Endpoints
+## 🚦 End-to-End Ride Lifecycle
 
-- **Interactive Dual-App Simulator:** [http://localhost:3000](http://localhost:3000)
-- **Central Admin Operations Console:** [http://localhost:3000/admin-panel/](http://localhost:3000/admin-panel/)
-- **Core Backend REST API:** [http://localhost:5000](http://localhost:5000)
-- **Health Check API:** [http://localhost:5000/api/health](http://localhost:5000/api/health)
-- **Captain Flutter Web:** [http://localhost:8081](http://localhost:8081)
-- **Rider Flutter Web:** [http://localhost:8082](http://localhost:8082)
-
----
-
-## 🏗️ Technical Architecture & Stack
-
-- **Mobile (Captain & Rider):** Flutter 3.24+ (Dart 3.5+), Leaflet/FlutterMap, Geolocator, AudioPlayers, Socket.io Client.
-- **Backend Matching Engine:** Node.js, Express, Socket.io, Mongoose (MongoDB), Redis Geo (with resilient local in-memory fallback).
-- **Security & Safety:** 4-digit trip validation OTP, 112 Police integration, live family ride sharing, DigiLocker KYC verification.
-- **Payment & Fintech:** Razorpay Payment Gateway, UPI Instant Captain Settlements (85% driver share / 15% platform fee).
-
----
-
-## 📂 Project Structure
-
-```text
-SuperWomen/
-├── admin-panel/              # Central Operations & KYC telemetry dashboard
-│   └── index.html
-├── apks/                     # Compiled production Android APKs
-│   ├── CaptainSuperWomen.apk
-│   └── SuperWomenRider.apk
-├── backend/                  # Rapido-style real-time backend engine
-│   ├── src/
-│   │   ├── app.js            # Express + Socket.io + Mongoose server
-│   │   ├── controllers/      # Ride lifecycle & matching logic
-│   │   ├── routes/           # REST endpoints (auth, rides, captain, sos)
-│   │   └── services/         # Payment & notification services
-│   └── package.json
-├── mobile/                   # Flutter cross-platform source code
-│   ├── captain_app/          # Captain SuperWomen Flutter codebase
-│   └── rider_app/            # SuperWomen Rider Flutter codebase
-├── migrations/               # PostgreSQL + PostGIS schema migrations
-├── tests/                    # Integration & API test suites
-│   └── test_backend.js
-├── API_DOCUMENTATION.md      # Full REST & WebSocket API specification
-├── KYC_INTEGRATION_GUIDE.md  # DigiLocker & Parivahan DL/RC setup guide
-├── PITCH_DECK.md             # Investor pitch deck & Warangal/Hyderabad GTM
-├── index.html                # Interactive dual-phone Web Simulator
-├── server.js                 # Standalone web server
-└── run_dev.bat               # 1-click ecosystem launcher
-```
+1. **Authentication:** Phone OTP with dual fallback support (`4972` / `123456`) for local testing or SMS gateway delays.
+2. **Fare Quotation:** Calculated dynamically via Google Maps Distance Matrix and traffic models.
+3. **Atomic Driver Lock:**
+   ```sql
+   UPDATE rides
+   SET driver_id = $1, status = 'driver_assigned', assigned_at = NOW()
+   WHERE id = $2 AND status = 'searching' AND driver_id IS NULL
+   RETURNING id;
+   ```
+4. **Trip Verification:** 4-digit numeric OTP required by Captain app before status transitions to `STARTED`.
+5. **Fintech Settlement:** 80% of trip fare automatically credited to Captain Wallet upon `COMPLETED`.
+6. **Safety & SOS:** 1-tap SOS transmits GPS telemetry to Admin SOC and broadcasts alerts with Google Maps tracking links to emergency contacts.
