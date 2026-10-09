@@ -5,64 +5,203 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../services/api/node_modules/.prisma/client"
 }
 
+// 1. Users / Customers Table
 model Customer {
-  id    String @id @default(uuid())
-  phone String @unique
-  name  String
-  rides Ride[]
+  id             String          @id @default(uuid())
+  phone          String          @unique
+  name           String
+  pushToken      String?
+  createdAt      DateTime        @default(now())
+  rides          Ride[]
+  fareQuotes     FareQuote[]
+  ratingsGiven   Rating[]        @relation("CustomerRatings")
+  supportTickets SupportTicket[]
+  notifications  Notification[]
 }
 
+// 2. Captains / Drivers Table
 model Captain {
-  id        String   @id @default(uuid())
-  phone     String   @unique
-  name      String
-  kycStatus String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  kycDocs   Json?    // { aadhaarUrl, licenseUrl, selfieUrl, rcUrl }
-  isOnline  Boolean  @default(false)
-  vehicle   Vehicle?
-  rides     Ride[]
-  createdAt DateTime @default(now())
+  id                 String            @id @default(uuid())
+  phone              String            @unique
+  name               String
+  kycStatus          String            @default("PENDING") // PENDING, APPROVED, REJECTED
+  kycDocs            Json?             // { aadhaarUrl, licenseUrl, selfieUrl, rcUrl }
+  isOnline           Boolean           @default(false)
+  ratingAvg          Float             @default(5.0)
+  totalRides         Int               @default(0)
+  createdAt          DateTime          @default(now())
+  vehicle            Vehicle?
+  rides              Ride[]
+  documents          CaptainDocument[]
+  ratingsReceived    Rating[]          @relation("CaptainRatings")
+  supportTickets     SupportTicket[]
+  notifications      Notification[]
 }
 
+// 3. Vehicles Table
 model Vehicle {
-  id        String  @id @default(uuid())
-  captainId String  @unique
-  captain   Captain @relation(fields: [captainId], references: [id])
-  number    String
-  model     String
+  id             String   @id @default(uuid())
+  captainId      String   @unique
+  captain        Captain  @relation(fields: [captainId], references: [id])
+  vehicleType    String   @default("BIKE") // BIKE, AUTO
+  number         String
+  model          String
+  rcNumber       String?
+  color          String?
 }
 
+// 4. Rides Table (Core Lifecycle State Machine)
 model Ride {
-  id         String    @id @default(uuid())
-  customerId String
-  captainId  String?
-  pickupLat  Float
-  pickupLng  Float
-  dropLat    Float
-  dropLng    Float
-  fare       Float
-  status     String    @default("SEARCHING") // SEARCHING, ACCEPTED, STARTED, COMPLETED, CANCELLED
-  otp        String
-  createdAt  DateTime  @default(now())
-  customer   Customer  @relation(fields: [customerId], references: [id])
-  captain    Captain?  @relation(fields: [captainId], references: [id])
-  payment    Payment?
-  sos        SosEvent[]
+  id             String          @id @default(uuid())
+  customerId     String
+  captainId      String?
+  pickupLat      Float
+  pickupLng      Float
+  pickupAddress  String?
+  dropLat        Float
+  dropLng        Float
+  dropAddress    String?
+  distanceKm     Float?
+  durationMins   Int?
+  vehicleType    String          @default("BIKE")
+  fare           Float
+  farePaise      Int             @default(18500)
+  status         String          @default("SEARCHING") // REQUESTED, SEARCHING, ASSIGNED, CAPTAIN_ARRIVED, IN_PROGRESS, COMPLETED, CANCELLED
+  otp            String
+  createdAt      DateTime        @default(now())
+  customer       Customer        @relation(fields: [customerId], references: [id])
+  captain        Captain?        @relation(fields: [captainId], references: [id])
+  payment        Payment?
+  sos            SosEvent[]
+  locations      RideLocation[]
+  rating         Rating?
+  supportTickets SupportTicket[]
 }
 
+// 5. Ride Live Location Updates Table
+model RideLocation {
+  id         String   @id @default(uuid())
+  rideId     String
+  ride       Ride     @relation(fields: [rideId], references: [id])
+  lat        Float
+  lng        Float
+  speed      Float?
+  heading    Float?
+  recordedAt DateTime @default(now())
+
+  @@index([rideId, recordedAt])
+}
+
+// 6. Fare Quotes / Route Estimations Table
+model FareQuote {
+  id                 String    @id @default(uuid())
+  customerId         String?
+  customer           Customer? @relation(fields: [customerId], references: [id])
+  pickupLat          Float
+  pickupLng          Float
+  dropLat            Float
+  dropLng            Float
+  distanceKm         Float
+  durationMins       Int
+  vehicleType        String
+  estimatedFarePaise Int
+  expiresAt          DateTime
+  createdAt          DateTime  @default(now())
+}
+
+// 7. Payments Table (Razorpay Orders, UPI, Settlements)
 model Payment {
-  id                 String   @id @default(uuid())
-  rideId             String   @unique
-  ride               Ride     @relation(fields: [rideId], references: [id])
-  razorpayOrderId    String   @unique
-  razorpayPaymentId  String?
-  amountPaise        Int
-  status             String   @default("CREATED") // CREATED, PAID, FAILED
-  createdAt          DateTime @default(now())
+  id                String   @id @default(uuid())
+  rideId            String   @unique
+  ride              Ride     @relation(fields: [rideId], references: [id])
+  razorpayOrderId   String   @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  amountPaise       Int
+  paymentMethod     String   @default("UPI") // UPI, CARD, CASH
+  status            String   @default("CREATED") // CREATED, PAID, FAILED, REFUNDED
+  createdAt         DateTime @default(now())
 }
 
+// 8. Captain KYC Documents (AWS S3 Storage)
+model CaptainDocument {
+  id                 String   @id @default(uuid())
+  captainId          String
+  captain            Captain  @relation(fields: [captainId], references: [id])
+  documentType       String   // AADHAAR, LICENSE, RC, PAN
+  documentUrl        String
+  s3Key              String?
+  verificationStatus String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  rejectionReason    String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// 9. Ratings & Reviews Table
+model Rating {
+  id         String   @id @default(uuid())
+  rideId     String   @unique
+  ride       Ride     @relation(fields: [rideId], references: [id])
+  customerId String
+  customer   Customer @relation("CustomerRatings", fields: [customerId], references: [id])
+  captainId  String
+  captain    Captain  @relation("CaptainRatings", fields: [captainId], references: [id])
+  score      Int      // 1 to 5
+  comment    String?
+  tags       String[] @default([])
+  createdAt  DateTime @default(now())
+}
+
+// 10. Support Tickets Table
+model SupportTicket {
+  id          String    @id @default(uuid())
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  captainId   String?
+  captain     Captain?  @relation(fields: [captainId], references: [id])
+  rideId      String?
+  ride        Ride?     @relation(fields: [rideId], references: [id])
+  category    String    // SAFETY, PAYMENT, FARE_DISPUTE, LOST_ITEM, GENERAL
+  priority    String    @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  status      String    @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  subject     String
+  description String
+  createdAt   DateTime  @default(now())
+}
+
+// 11. Push Notifications Table (FCM)
+model Notification {
+  id             String    @id @default(uuid())
+  customerId     String?
+  customer       Customer? @relation(fields: [customerId], references: [id])
+  captainId      String?
+  captain        Captain?  @relation(fields: [captainId], references: [id])
+  title          String
+  body           String
+  type           String    // RIDE_ALERT, PAYMENT_SUCCESS, SOS_BROADCAST, PROMO
+  deliveryStatus String    @default("SENT") // PENDING, SENT, FAILED
+  fcmMessageId   String?
+  createdAt      DateTime  @default(now())
+}
+
+// 12. Audit Logs Table (Security, Compliance & Fraud Tracking)
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String
+  actorType String   // CUSTOMER, CAPTAIN, ADMIN, SYSTEM
+  action    String
+  resource  String
+  metadata  Json?
+  ipAddress String?
+  timestamp DateTime @default(now())
+
+  @@index([actorId, timestamp])
+}
+
+// Emergency SOS Events (100% Women Safety Core Feature)
 model SosEvent {
   id         String    @id @default(uuid())
   rideId     String

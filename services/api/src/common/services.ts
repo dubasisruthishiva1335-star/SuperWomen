@@ -16,3 +16,5 @@ export class RedisService extends Redis {
     });
   }
 }
+
+export * from './aws-s3.service';
