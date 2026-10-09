@@ -1,0 +1,5 @@
+mobile/
+services/
+apks/
+.git/
+**/node_modules/
