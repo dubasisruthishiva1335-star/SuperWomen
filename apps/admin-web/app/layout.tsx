@@ -9,7 +9,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en"><body>
       <nav>
         <b>💜 Super Women Admin</b>
-        <Link href="/">Dashboard</Link><Link href="/kyc">KYC</Link><Link href="/sos">SOS</Link>
+        <Link href="/">Dashboard</Link><Link href="/kyc">KYC</Link><Link href="/sos">SOS</Link><Link href="/support">Support</Link>
       </nav>
       <main>{children}</main>
     </body></html>
