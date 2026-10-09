@@ -22,7 +22,7 @@ jobs:
       - name: Install & Build API
         working-directory: ./services/api
         run: |
-          npm install
+          npm install --legacy-peer-deps
           npx prisma generate --schema=../../database/schema.prisma
           npm run build
 
