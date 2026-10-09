@@ -97,6 +97,14 @@ export class CaptainsService {
       }).catch(() => {});
 
       this.rt.emitTo(`ride:${rideId}`, 'driver_location', { lat, lng, heading, speed });
+      this.rt.emitTo(`ride:${rideId}`, 'driver.location.updated', {
+        event: 'driver.location.updated',
+        rideId,
+        location: { latitude: lat, longitude: lng },
+        heading,
+        speed,
+        timestamp: new Date().toISOString(),
+      });
     }
 
     return { status: 'OK', lat, lng };
@@ -194,10 +202,10 @@ export class CaptainsService {
   }
 }
 
-@ApiTags('Captains')
+@ApiTags('Captains & Drivers')
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
-@Controller(['captains', 'v1/captains'])
+@Controller(['captains', 'v1/captains', 'driver', 'v1/driver'])
 export class CaptainsController {
   constructor(private captainsService: CaptainsService) {}
 
@@ -215,16 +223,18 @@ export class CaptainsController {
     return this.captainsService.uploadDocument(req.user.sub, body);
   }
 
-  @Patch('availability')
+  @Patch(['availability', 'go-online'])
+  @Post(['go-online', 'availability'])
   @Roles('captain')
-  @ApiOperation({ summary: 'Toggle online/offline driver status' })
+  @ApiOperation({ summary: 'Toggle online/offline driver status (/v1/driver/go-online)' })
   setAvailability(@Req() req: any, @Body() body: { isOnline: boolean; lat?: number; lng?: number }) {
     return this.captainsService.setAvailability(req.user.sub, body.isOnline, body.lat, body.lng);
   }
 
   @Put('location')
+  @Post('location')
   @Roles('captain')
-  @ApiOperation({ summary: 'Stream GPS coordinates with Redis geospatial caching and WebSocket broadcast' })
+  @ApiOperation({ summary: 'Stream GPS coordinates with Redis geospatial caching (/v1/driver/location)' })
   updateLocation(@Req() req: any, @Body() body: { lat: number; lng: number; heading?: number; speed?: number; rideId?: string }) {
     return this.captainsService.updateLocation(req.user.sub, body.lat, body.lng, body.heading, body.speed, body.rideId);
   }

@@ -149,10 +149,19 @@ export class DispatchService {
 export class DispatchController {
   constructor(private dispatchService: DispatchService) {}
 
-  @Post('quotes')
-  @ApiOperation({ summary: 'Calculate dynamic fare estimates for SuperBike and SuperAuto' })
+  @Post(['quotes', 'fare-estimates', 'v1/fare-estimates'])
+  @ApiOperation({ summary: 'Calculate dynamic fare estimates for SuperBike and SuperAuto (/v1/fare-estimates)' })
   getQuotes(@Body() body: { pickupLat: number; pickupLng: number; dropLat: number; dropLng: number }) {
     return this.dispatchService.getQuotes(null, body);
+  }
+
+  @Post(['ride-offers/:offerId/accept', 'v1/ride-offers/:offerId/accept'])
+  @UseGuards(AuthGuard)
+  @Roles('captain')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Accept incoming ride offer atomically (/v1/ride-offers/:offerId/accept)' })
+  acceptOffer(@Param('offerId') offerId: string, @Req() req: any) {
+    return this.dispatchService.assignRide(offerId, req.user.sub);
   }
 
   @Post('dispatch/search')
@@ -172,7 +181,7 @@ export class DispatchController {
     return this.dispatchService.assignRide(body.rideId, body.captainId);
   }
 
-  @Post('dispatch/:rideId/reject')
+  @Post(['dispatch/:rideId/reject', 'ride-offers/:rideId/reject'])
   @UseGuards(AuthGuard)
   @Roles('captain')
   @ApiBearerAuth()

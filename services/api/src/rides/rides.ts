@@ -364,9 +364,9 @@ export class RidesService {
   }
 }
 
-@ApiTags('Rides')
+@ApiTags('Rides & Trips')
 @ApiBearerAuth()
-@Controller(['rides', 'v1/rides'])
+@Controller(['rides', 'v1/rides', 'trips', 'v1/trips'])
 @UseGuards(AuthGuard)
 export class RidesController {
   constructor(private s: RidesService) {}
@@ -378,7 +378,7 @@ export class RidesController {
 
   @Post()
   @Roles('customer')
-  @ApiOperation({ summary: 'Create ride request with optional promo code' })
+  @ApiOperation({ summary: 'Create ride request with optional promo code (/v1/rides)' })
   requestV1(@Req() r: any, @Body() b: any) { return this.s.request(r.user.sub, b); }
 
   @Get('history')
@@ -386,7 +386,7 @@ export class RidesController {
   history(@Req() r: any) { return this.s.getHistory(r.user.sub, r.user.role); }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get single ride details' })
+  @ApiOperation({ summary: 'Get single ride details (/v1/rides/:rideId)' })
   getOne(@Param('id') id: string) { return this.s.getRide(id); }
 
   @Post(':id/accept')
@@ -394,30 +394,31 @@ export class RidesController {
   @ApiOperation({ summary: 'Captain accepts a dispatched ride' })
   accept(@Req() r: any, @Param('id') id: string) { return this.s.accept(id, r.user.sub); }
 
-  @Post(':id/arrive')
+  @Post([':id/arrive', '/v1/trips/:id/arrive'])
   @Roles('captain')
-  @ApiOperation({ summary: 'Captain marks arrived at pickup point' })
+  @ApiOperation({ summary: 'Captain marks arrived at pickup point (/v1/trips/:tripId/arrive)' })
   arrive(@Req() r: any, @Param('id') id: string) { return this.s.arrive(id, r.user.sub); }
 
-  @Post(':id/start')
+  @Post([':id/start', '/v1/trips/:id/start'])
   @Roles('captain')
-  @ApiOperation({ summary: 'Captain validates 4-digit OTP to start trip' })
+  @ApiOperation({ summary: 'Captain validates 4-digit OTP to start trip (/v1/trips/:tripId/start)' })
   start(@Req() r: any, @Param('id') id: string, @Body('otp') otp: string) { return this.s.start(id, r.user.sub, otp); }
 
-  @Post(':id/complete')
+  @Post([':id/complete', '/v1/trips/:id/complete'])
   @Roles('captain')
-  @ApiOperation({ summary: 'Captain completes trip at destination & auto-credits earnings' })
+  @ApiOperation({ summary: 'Captain completes trip at destination & auto-credits earnings (/v1/trips/:tripId/complete)' })
   complete(@Req() r: any, @Param('id') id: string) { return this.s.complete(id, r.user.sub); }
 
   @Post(':id/cancel')
-  @ApiOperation({ summary: 'Cancel ride with optional cancellation reason' })
+  @ApiOperation({ summary: 'Cancel ride with optional cancellation reason (/v1/rides/:rideId/cancel)' })
   cancel(@Req() r: any, @Param('id') id: string, @Body('reason') reason?: string) { return this.s.cancel(id, r.user.sub, reason); }
 
-  @Post(':id/rating')
+  @Post([':id/rating', ':id/review', '/v1/rides/:id/review'])
   @Roles('customer')
-  @ApiOperation({ summary: 'Submit passenger rating & review for captain' })
-  rate(@Req() r: any, @Param('id') id: string, @Body() b: { score: number; comment?: string; tags?: string[] }) {
-    return this.s.rateRide(id, r.user.sub, b.score, b.comment, b.tags || []);
+  @ApiOperation({ summary: 'Submit passenger rating & review for captain (/v1/rides/:rideId/review)' })
+  rate(@Req() r: any, @Param('id') id: string, @Body() b: { score?: number; rating?: number; comment?: string; tags?: string[] }) {
+    const star = b.score || b.rating || 5;
+    return this.s.rateRide(id, r.user.sub, star, b.comment, b.tags || []);
   }
 
   @Post(':id/share')

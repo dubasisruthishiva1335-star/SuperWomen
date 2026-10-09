@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Headers, HttpCode, Injectable, NotFoundException, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Headers, HttpCode, Injectable, NotFoundException, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import Razorpay from 'razorpay';
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -63,12 +63,14 @@ export class PaymentsService {
 export class PaymentsController {
   constructor(private s: PaymentsService) {}
 
-  @Post(['order', 'orders'])
+  @Post(['order', 'orders', '/v1/rides/:rideId/payment-order'])
   @UseGuards(AuthGuard)
   @Roles('customer')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create Razorpay payment order for completed ride' })
-  order(@Req() r: any, @Body('rideId') rideId: string) { return this.s.createOrder(r.user.sub, rideId); }
+  @ApiOperation({ summary: 'Create Razorpay payment order for completed ride (/v1/rides/:rideId/payment-order)' })
+  order(@Req() r: any, @Body('rideId') rideId: string, @Param('rideId') paramRideId?: string) {
+    return this.s.createOrder(r.user.sub, paramRideId || rideId);
+  }
 
   @Post('verify')
   @UseGuards(AuthGuard)
@@ -77,8 +79,8 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Verify Razorpay payment signature from mobile client' })
   verify(@Req() r: any, @Body() b: any) { return this.s.verify(r.user.sub, b); }
 
-  @Post(['webhook', '/v1/webhooks/payments'])
+  @Post(['webhook', '/v1/webhooks/payments', '/v1/webhooks/payments/:provider'])
   @HttpCode(200)
-  @ApiOperation({ summary: 'Razorpay webhook callback endpoint' })
+  @ApiOperation({ summary: 'Payment webhook callback endpoint (/v1/webhooks/payments/:provider)' })
   webhook(@Req() r: any, @Headers('x-razorpay-signature') sig: string) { return this.s.webhook(r.rawBody, sig); }
 }

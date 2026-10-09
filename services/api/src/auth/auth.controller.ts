@@ -28,7 +28,7 @@ if (!admin.apps.length) {
 export class AuthController {
   constructor(private prisma: PrismaService, private jwt: JwtService) {}
 
-  @Post(['send-otp', 'otp/send'])
+  @Post(['send-otp', 'otp/send', 'otp/request'])
   @ApiOperation({ summary: 'Request phone OTP code verification' })
   async sendOtp(@Body() b: { phone: string; role?: string }) {
     if (!b.phone || !b.phone.startsWith('+91')) {
@@ -44,7 +44,7 @@ export class AuthController {
   }
 
   /** Client does Firebase phone OTP, sends us the Firebase ID token. We verify it server-side and issue our own JWT. */
-  @Post(['verify', 'verify-otp'])
+  @Post(['verify', 'verify-otp', 'otp/verify'])
   @ApiOperation({ summary: 'Verify phone OTP token and issue secure JWT session' })
   async verify(@Body() b: { idToken?: string; phone?: string; code?: string; role: 'customer' | 'captain' | 'admin'; name?: string }) {
     let phone: string | undefined;

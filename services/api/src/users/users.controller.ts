@@ -64,8 +64,8 @@ export class UsersService {
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  @Get('me')
-  @ApiOperation({ summary: 'Get current authenticated user profile' })
+  @Get(['me', '/v1/me'])
+  @ApiOperation({ summary: 'Get current authenticated user profile (/v1/me)' })
   getMe(@Req() req: any) {
     return this.usersService.getProfile(req.user.sub);
   }
