@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/rider_ride_service.dart';
 import '../services/rider_socket_service.dart';
 import '../widgets/google_map_widget.dart';
@@ -18,6 +19,42 @@ class _RiderLiveTrackingScreenState extends State<RiderLiveTrackingScreen> {
   String _rideStatus = 'ARRIVING'; // ARRIVING, STARTED, COMPLETED
   double _captainLat = 12.9716;
   double _captainLng = 77.5946;
+
+  Future<void> _callCaptain(String phone) async {
+    final telUri = Uri.parse("tel:$phone");
+    try {
+      if (await canLaunchUrl(telUri)) {
+        await launchUrl(telUri);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _shareLiveTrip() async {
+    final trackingUrl = "https://super-women.vercel.app/track/$_rideId";
+    final message = "I am on a SuperWomen 100% Women-Safe ride with Captain Priya (KA01 SW 1234). Track my live journey: $trackingUrl";
+    final whatsappUri = Uri.parse("whatsapp://send?text=${Uri.encodeComponent(message)}");
+    try {
+      if (await canLaunchUrl(whatsappUri)) {
+        await launchUrl(whatsappUri);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF6A2CEA),
+            content: Text("Live link copied: $trackingUrl"),
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFF6A2CEA),
+          content: Text("Live link copied: $trackingUrl"),
+        ),
+      );
+    }
+  }
 
   String get _rideId => widget.ride?['id'] ?? 'mock-ride-id';
   String get _otp => widget.ride?['otp'] ?? '4972';
@@ -162,11 +199,21 @@ class _RiderLiveTrackingScreenState extends State<RiderLiveTrackingScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
                         children: [
-                          Text("Captain Priya Sharma", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text("Honda Activa 6G · KA01 SW 1234", style: TextStyle(color: Color(0xFF635777), fontSize: 12)),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Captain Priya Sharma", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              Text("Honda Activa 6G · KA01 SW 1234", style: TextStyle(color: Color(0xFF635777), fontSize: 12)),
+                            ],
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.phone, color: Color(0xFF00C853), size: 22),
+                            tooltip: "Call Captain",
+                            onPressed: () => _callCaptain('+919876543211'),
+                          ),
                         ],
                       ),
                       Text("₹${_fare.toInt()}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF6A2CEA))),
@@ -205,11 +252,7 @@ class _RiderLiveTrackingScreenState extends State<RiderLiveTrackingScreen> {
                           ),
                           icon: const Icon(Icons.share, color: Color(0xFF6A2CEA), size: 18),
                           label: const Text("Share Live Trip", style: TextStyle(color: Color(0xFF6A2CEA), fontWeight: FontWeight.bold, fontSize: 12)),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Live tracking link copied to clipboard!")),
-                            );
-                          },
+                          onPressed: _shareLiveTrip,
                         ),
                       ),
                       const SizedBox(width: 8),

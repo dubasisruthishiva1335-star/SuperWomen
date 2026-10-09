@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../constants/app_theme.dart';
 import '../services/captain_ride_service.dart';
-import '../services/captain_socket_service.dart';
 import '../widgets/google_map_widget.dart';
 
 class CaptainNavigationScreen extends StatefulWidget {
@@ -18,6 +18,29 @@ class _CaptainNavigationScreenState extends State<CaptainNavigationScreen> {
   String _rideStage = 'TO_PICKUP';
   bool _isLoading = false;
   final TextEditingController _otpController = TextEditingController();
+
+  Future<void> _launchGoogleMapsNavigation(double targetLat, double targetLng) async {
+    final navUri = Uri.parse("google.navigation:q=$targetLat,$targetLng&mode=d");
+    final webUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$targetLat,$targetLng&travelmode=driving");
+    try {
+      if (await canLaunchUrl(navUri)) {
+        await launchUrl(navUri);
+      } else {
+        await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      await launchUrl(webUri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _callPassenger(String phone) async {
+    final telUri = Uri.parse("tel:$phone");
+    try {
+      if (await canLaunchUrl(telUri)) {
+        await launchUrl(telUri);
+      }
+    } catch (_) {}
+  }
 
   String get _rideId => widget.ride?['id'] ?? 'mock-ride-id';
   double get _fare => (widget.ride?['fare'] as num?)?.toDouble() ?? 185.0;
@@ -259,7 +282,20 @@ class _CaptainNavigationScreenState extends State<CaptainNavigationScreen> {
                         ),
                       ],
                     ),
-                    const Icon(Icons.explore_outlined, color: Colors.white70),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.accentPink,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.navigation, color: Colors.white, size: 16),
+                      label: const Text("GPS", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+                      onPressed: () {
+                        final lat = _rideStage == 'STARTED' ? 12.9784 : 12.9352;
+                        final lng = _rideStage == 'STARTED' ? 77.6408 : 77.6245;
+                        _launchGoogleMapsNavigation(lat, lng);
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -298,19 +334,25 @@ class _CaptainNavigationScreenState extends State<CaptainNavigationScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          CircleAvatar(
+                          const CircleAvatar(
                             backgroundColor: AppTheme.purpleTint,
                             child: Text("R", style: TextStyle(color: AppTheme.primaryPurple, fontWeight: FontWeight.bold)),
                           ),
-                          SizedBox(width: 12),
-                          Column(
+                          const SizedBox(width: 10),
+                          const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("Passenger", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              Text("★ 4.9 · Verified Woman Rider", style: TextStyle(color: AppTheme.inkSoft, fontSize: 12)),
+                              Text("Passenger", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                              Text("★ 4.9 · Woman Rider", style: TextStyle(color: AppTheme.inkSoft, fontSize: 11)),
                             ],
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.phone, color: AppTheme.safeGreen, size: 22),
+                            tooltip: "Call Passenger",
+                            onPressed: () => _callPassenger('+919876543210'),
                           ),
                         ],
                       ),
