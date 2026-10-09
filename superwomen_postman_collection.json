@@ -1,0 +1,355 @@
+{
+  "info": {
+    "name": "SuperWomen API - Complete Production Collection v1.0",
+    "_postman_id": "8f888801-19b8-47d0-a0a9-22a4505f0001",
+    "description": "Production Postman Collection for SuperWomen — Uber-style 100% Women Safe Ride Hailing Modular Monolith platform with PostGIS, Redis GEO, atomic assignment, Google Maps Platform, Razorpay payments, and Admin Ops.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "token", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIrOTE5OTk5OTk5OTk5Iiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzkxMzE2Mjc5LCJleHAiOjE3OTM5MDgyNzl9.2zfLBcXu0KdOJBsKI1ISHm49-LHif6NGXfmOa4Ccp9Q", "type": "string" },
+    { "key": "rideId", "value": "demo-ride-101", "type": "string" },
+    { "key": "trackingToken", "value": "live-demo-token-1234", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "0. System & Health",
+      "item": [
+        {
+          "name": "Health Check Probe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/v1/health", "host": ["{{baseUrl}}"], "path": ["v1", "health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Authentication (OTP & JWT)",
+      "item": [
+        {
+          "name": "Request Phone OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+919999999991\",\n  \"role\": \"passenger\"\n}" },
+            "url": { "raw": "{{baseUrl}}/v1/auth/otp/request", "host": ["{{baseUrl}}"], "path": ["v1", "auth", "otp", "request"] }
+          }
+        },
+        {
+          "name": "Verify OTP & Issue Tokens",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+919999999991\",\n  \"code\": \"123456\",\n  \"role\": \"passenger\"\n}" },
+            "url": { "raw": "{{baseUrl}}/v1/auth/otp/verify", "host": ["{{baseUrl}}"], "path": ["v1", "auth", "otp", "verify"] }
+          }
+        },
+        {
+          "name": "Refresh Access Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"refresh-token-here\"\n}" },
+            "url": { "raw": "{{baseUrl}}/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["v1", "auth", "refresh"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Google Maps & Navigation",
+      "item": [
+        {
+          "name": "Places Autocomplete",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/maps/autocomplete?q=Koramangala", "host": ["{{baseUrl}}"], "path": ["v1", "maps", "autocomplete"], "query": [{ "key": "q", "value": "Koramangala" }] }
+          }
+        },
+        {
+          "name": "Compute Route & Polyline",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup\": { \"lat\": 12.9352, \"lng\": 77.6245 },\n  \"destination\": { \"lat\": 12.9784, \"lng\": 77.6408 },\n  \"vehicleType\": \"BIKE\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/v1/maps/route", "host": ["{{baseUrl}}"], "path": ["v1", "maps", "route"] }
+          }
+        },
+        {
+          "name": "Geocode Place / Address",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/maps/geocode?placeId=blr-kor-01", "host": ["{{baseUrl}}"], "path": ["v1", "maps", "geocode"], "query": [{ "key": "placeId", "value": "blr-kor-01" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Fare Quotes & Pricing",
+      "item": [
+        {
+          "name": "Calculate Fare Estimate Quote",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickupLat\": 12.9352,\n  \"pickupLng\": 77.6245,\n  \"dropLat\": 12.9784,\n  \"dropLng\": 77.6408\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/v1/quotes", "host": ["{{baseUrl}}"], "path": ["v1", "quotes"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Ride Dispatch & State Machine",
+      "item": [
+        {
+          "name": "Request / Create Ride",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickupLat\": 12.9352,\n  \"pickupLng\": 77.6245,\n  \"dropLat\": 12.9784,\n  \"dropLng\": 77.6408,\n  \"vehicleType\": \"BIKE\",\n  \"pickupAddress\": \"Koramangala 80ft Rd, Bangalore\",\n  \"dropAddress\": \"Indiranagar Metro, Bangalore\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/v1/rides", "host": ["{{baseUrl}}"], "path": ["v1", "rides"] }
+          }
+        },
+        {
+          "name": "Get Ride Status",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/rides/{{rideId}}", "host": ["{{baseUrl}}"], "path": ["v1", "rides", "{{rideId}}"] }
+          }
+        },
+        {
+          "name": "Atomic Accept Offer (Driver Race)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/ride-offers/offer-101/accept", "host": ["{{baseUrl}}"], "path": ["v1", "ride-offers", "offer-101", "accept"] }
+          }
+        },
+        {
+          "name": "Driver Arrived at Pickup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/trips/{{rideId}}/arrive", "host": ["{{baseUrl}}"], "path": ["v1", "trips", "{{rideId}}", "arrive"] }
+          }
+        },
+        {
+          "name": "Verify 4-Digit OTP & Start Ride",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"otp\": \"4972\"\n}" },
+            "url": { "raw": "{{baseUrl}}/v1/trips/{{rideId}}/start", "host": ["{{baseUrl}}"], "path": ["v1", "trips", "{{rideId}}", "start"] }
+          }
+        },
+        {
+          "name": "Complete Trip & Calculate Final Fare",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/trips/{{rideId}}/complete", "host": ["{{baseUrl}}"], "path": ["v1", "trips", "{{rideId}}", "complete"] }
+          }
+        },
+        {
+          "name": "Cancel Ride",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Changed plans\"\n}" },
+            "url": { "raw": "{{baseUrl}}/v1/rides/{{rideId}}/cancel", "host": ["{{baseUrl}}"], "path": ["v1", "rides", "{{rideId}}", "cancel"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Telemetry & Family Live Tracking",
+      "item": [
+        {
+          "name": "Update Captain GPS Location",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"latitude\": 12.9480,\n  \"longitude\": 77.6180,\n  \"heading\": 45\n}" },
+            "url": { "raw": "{{baseUrl}}/v1/captains/location", "host": ["{{baseUrl}}"], "path": ["v1", "captains", "location"] }
+          }
+        },
+        {
+          "name": "Public Family Tracking (No Auth Required)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/v1/public/rides/track/{{trackingToken}}", "host": ["{{baseUrl}}"], "path": ["v1", "public", "rides", "track", "{{trackingToken}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Women Safety & Emergency SOS",
+      "item": [
+        {
+          "name": "Trigger Emergency SOS Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"rideId\": \"{{rideId}}\",\n  \"latitude\": 12.9750,\n  \"longitude\": 77.6050\n}" },
+            "url": { "raw": "{{baseUrl}}/v1/safety/sos", "host": ["{{baseUrl}}"], "path": ["v1", "safety", "sos"] }
+          }
+        },
+        {
+          "name": "List Active SOS Incidents",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/safety/sos/active", "host": ["{{baseUrl}}"], "path": ["v1", "safety", "sos", "active"] }
+          }
+        },
+        {
+          "name": "List Trusted Emergency Contacts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/users/emergency-contacts", "host": ["{{baseUrl}}"], "path": ["v1", "users", "emergency-contacts"] }
+          }
+        },
+        {
+          "name": "Add Emergency Contact",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Mom\",\n  \"phone\": \"+919876543299\",\n  \"relationship\": \"Mother\"\n}" },
+            "url": { "raw": "{{baseUrl}}/v1/users/emergency-contacts", "host": ["{{baseUrl}}"], "path": ["v1", "users", "emergency-contacts"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Payments (Razorpay)",
+      "item": [
+        {
+          "name": "Create Razorpay Payment Order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/rides/{{rideId}}/payment-order", "host": ["{{baseUrl}}"], "path": ["v1", "rides", "{{rideId}}", "payment-order"] }
+          }
+        },
+        {
+          "name": "Verify Razorpay Payment Signature",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rideId\": \"{{rideId}}\",\n  \"razorpayPaymentId\": \"pay_12345678\",\n  \"razorpayOrderId\": \"order_12345678\",\n  \"razorpaySignature\": \"test-signature\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/v1/payments/verify", "host": ["{{baseUrl}}"], "path": ["v1", "payments", "verify"] }
+          }
+        },
+        {
+          "name": "Razorpay Webhook Handler",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-razorpay-signature", "value": "sample-signature" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"payment.captured\",\n  \"payload\": {\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_1001\",\n        \"order_id\": \"order_1001\",\n        \"amount\": 18500,\n        \"status\": \"captured\",\n        \"notes\": { \"rideId\": \"{{rideId}}\" }\n      }\n    }\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/v1/webhooks/payments/razorpay", "host": ["{{baseUrl}}"], "path": ["v1", "webhooks", "payments", "razorpay"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Admin Operations Portal",
+      "item": [
+        {
+          "name": "Platform Overview Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/admin/stats", "host": ["{{baseUrl}}"], "path": ["v1", "admin", "stats"] }
+          }
+        },
+        {
+          "name": "Live Drivers Map Telemetry",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/admin/drivers/live", "host": ["{{baseUrl}}"], "path": ["v1", "admin", "drivers", "live"] }
+          }
+        },
+        {
+          "name": "Pending Driver KYC Documents",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/admin/captains?status=PENDING", "host": ["{{baseUrl}}"], "path": ["v1", "admin", "captains"], "query": [{ "key": "status", "value": "PENDING" }] }
+          }
+        },
+        {
+          "name": "Approve / Reject Captain KYC",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"APPROVED\"\n}" },
+            "url": { "raw": "{{baseUrl}}/v1/admin/captains/cap-101/kyc", "host": ["{{baseUrl}}"], "path": ["v1", "admin", "captains", "cap-101", "kyc"] }
+          }
+        },
+        {
+          "name": "Financial & Safety Analytics Report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/v1/admin/reports", "host": ["{{baseUrl}}"], "path": ["v1", "admin", "reports"] }
+          }
+        }
+      ]
+    }
+  ]
+}

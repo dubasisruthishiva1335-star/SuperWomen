@@ -11,6 +11,8 @@ import { CaptainsController, CaptainsService } from './captains/captains.control
 import { DispatchController, DispatchService } from './dispatch/dispatch.controller';
 import { CouponsController, CouponsService } from './coupons/coupons.controller';
 import { SupportController, SupportService } from './support/support.controller';
+import { MapsController } from './maps/maps.controller';
+import { HealthController } from './common/health.controller';
 import { RealtimeGateway } from './realtime/realtime.gateway';
 
 @Global()
@@ -23,6 +25,8 @@ import { RealtimeGateway } from './realtime/realtime.gateway';
     }),
   ],
   controllers: [
+    HealthController,
+    MapsController,
     AuthController,
     UsersController,
     CaptainsController,
