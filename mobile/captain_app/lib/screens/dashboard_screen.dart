@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../constants/app_theme.dart';
 import '../services/captain_ride_service.dart';
 import '../services/captain_socket_service.dart';
+import '../widgets/google_map_widget.dart';
 import 'navigation_screen.dart';
 
 class CaptainDashboardScreen extends StatefulWidget {
@@ -274,18 +276,13 @@ class _CaptainDashboardScreenState extends State<CaptainDashboardScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Map Background
-          Container(
-            color: const Color(0xFFE8DEFA),
-            child: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.location_on, color: AppTheme.primaryPurple, size: 48),
-                  Text("Live Map · Ready for Requests", style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryPurple)),
-                ],
-              ),
-            ),
+          // Live Google Map View
+          const GoogleMapWidget(
+            initialCenter: LatLng(12.9716, 77.5946),
+            initialZoom: 15.0,
+            vehicleLocation: LatLng(12.9716, 77.5946),
+            pickupLocation: LatLng(12.9352, 77.6245), // Koramangala
+            dropLocation: LatLng(12.9784, 77.6408), // Indiranagar
           ),
 
           // Top Floating Online Toggle

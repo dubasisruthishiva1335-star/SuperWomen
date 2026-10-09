@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../services/rider_ride_service.dart';
 import '../services/rider_socket_service.dart';
+import '../widgets/google_map_widget.dart';
 import 'rating_payment_screen.dart';
 
 class RiderLiveTrackingScreen extends StatefulWidget {
@@ -85,28 +87,14 @@ class _RiderLiveTrackingScreenState extends State<RiderLiveTrackingScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Map Background
-          Container(
-            color: const Color(0xFFE8DEFA),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.two_wheeler, color: Color(0xFF6A2CEA), size: 54),
-                  const SizedBox(height: 8),
-                  Text(
-                    _rideStatus == 'STARTED'
-                        ? "Trip in Progress to Indiranagar"
-                        : "Captain is Arriving at Pickup Location",
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6A2CEA)),
-                  ),
-                  Text(
-                    "Live Coordinates: ${_captainLat.toStringAsFixed(4)}, ${_captainLng.toStringAsFixed(4)}",
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF635777)),
-                  ),
-                ],
-              ),
-            ),
+          // Live Google Map View with real-time captain telemetry
+          GoogleMapWidget(
+            vehicleLocation: LatLng(_captainLat, _captainLng),
+            pickupLocation: const LatLng(12.9352, 77.6245), // Koramangala
+            dropLocation: const LatLng(12.9784, 77.6408), // Indiranagar
+            initialCenter: LatLng(_captainLat, _captainLng),
+            initialZoom: 15.0,
+            vehicleType: widget.ride?['vehicleType'] ?? 'BIKE',
           ),
 
           // Top Info Pill

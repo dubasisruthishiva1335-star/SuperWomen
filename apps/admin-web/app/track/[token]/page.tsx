@@ -154,35 +154,68 @@ export default function TrackRide({ params }: { params: { token: string } }) {
             </div>
           </div>
 
-          {/* Real-time Map & Navigation */}
+          {/* Real-time Google Map & Navigation */}
           {data.currentLocation && (
-            <div style={{
-              background: '#f5f5f5',
-              borderRadius: 12,
-              padding: 16,
-              textAlign: 'center',
-              marginBottom: 20
-            }}>
-              <div style={{ fontSize: 13, color: '#616161', marginBottom: 8 }}>
-                Current GPS: {data.currentLocation.lat.toFixed(4)}, {data.currentLocation.lng.toFixed(4)}
-              </div>
-              <a
-                href={`https://maps.google.com/?q=${data.currentLocation.lat},${data.currentLocation.lng}`}
-                target="_blank"
-                rel="noreferrer"
+            <div
+              style={{
+                background: '#f8f9fa',
+                borderRadius: 16,
+                overflow: 'hidden',
+                marginBottom: 20,
+                border: '1px solid #e9ecef',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+              }}
+            >
+              <div
                 style={{
-                  display: 'inline-block',
-                  background: '#1976d2',
-                  color: '#fff',
-                  padding: '10px 20px',
-                  borderRadius: 8,
-                  textDecoration: 'none',
-                  fontWeight: 'bold',
-                  fontSize: 14
+                  padding: '12px 16px',
+                  background: '#fff',
+                  borderBottom: '1px solid #eee',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                 }}
               >
-                📍 Open in Google Maps Live
-              </a>
+                <span style={{ fontWeight: 'bold', fontSize: 13, color: '#333' }}>
+                  📍 Google Maps Live Vehicle Telemetry
+                </span>
+                <span style={{ fontSize: 12, color: '#2e7d32', fontWeight: 600 }}>
+                  ● Active GPS Tracking
+                </span>
+              </div>
+              <iframe
+                title="Google Maps Family Live Tracking"
+                width="100%"
+                height="280"
+                style={{ border: 0, display: 'block' }}
+                src={`https://maps.google.com/maps?q=${data.currentLocation.lat},${data.currentLocation.lng}&z=15&output=embed`}
+                loading="lazy"
+                allowFullScreen
+              />
+              <div style={{ padding: '12px 16px', textAlign: 'center', background: '#fff' }}>
+                <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
+                  GPS Coordinates: {data.currentLocation.lat.toFixed(4)}, {data.currentLocation.lng.toFixed(4)}
+                </div>
+                <a
+                  href={`https://maps.google.com/?q=${data.currentLocation.lat},${data.currentLocation.lng}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: '#1976d2',
+                    color: '#fff',
+                    padding: '8px 18px',
+                    borderRadius: 8,
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    fontSize: 13,
+                  }}
+                >
+                  📍 Open Live Navigation in Google Maps
+                </a>
+              </div>
             </div>
           )}
 

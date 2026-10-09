@@ -67,6 +67,40 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      <div style={{ marginTop: 24, background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <b style={{ fontSize: 16, color: '#1a1a1a' }}>🗺️ Live Google Maps Fleet Radar & Safe Corridors</b>
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: '#666' }}>Active patrol zones, high-density women-safety transit routes & captain hotspots</p>
+          </div>
+          <a
+            href="https://maps.google.com/?q=12.9716,77.5946"
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              background: '#6A2CEA',
+              color: '#fff',
+              textDecoration: 'none',
+              padding: '6px 14px',
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 'bold',
+            }}
+          >
+            Open in Google Maps ↗
+          </a>
+        </div>
+        <iframe
+          title="Google Maps Fleet Radar"
+          width="100%"
+          height="340"
+          style={{ border: 0, display: 'block' }}
+          src="https://maps.google.com/maps?q=Bangalore,Karnataka,India&z=13&output=embed"
+          loading="lazy"
+          allowFullScreen
+        />
+      </div>
     </div>
   );
 }

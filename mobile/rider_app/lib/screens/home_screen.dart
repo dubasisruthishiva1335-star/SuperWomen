@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../services/rider_ride_service.dart';
 import '../services/rider_socket_service.dart';
+import '../widgets/google_map_widget.dart';
 import 'live_tracking_screen.dart';
 
 class RiderHomeScreen extends StatefulWidget {
@@ -246,19 +248,14 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Map
-          Container(
-            color: const Color(0xFFF3EBFF),
-            child: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.two_wheeler, size: 54, color: Color(0xFF6A2CEA)),
-                  SizedBox(height: 8),
-                  Text("SuperWomen Bike Taxi Map View", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6A2CEA))),
-                ],
-              ),
-            ),
+          // Interactive Google Map View
+          const GoogleMapWidget(
+            initialCenter: LatLng(12.9716, 77.5946),
+            initialZoom: 14.5,
+            pickupLocation: LatLng(12.9352, 77.6245), // Koramangala 80ft Rd
+            dropLocation: LatLng(12.9784, 77.6408), // Indiranagar Metro
+            vehicleLocation: LatLng(12.9480, 77.6180), // Nearby SuperWomen Captain
+            vehicleType: 'BIKE',
           ),
 
           // Top Header

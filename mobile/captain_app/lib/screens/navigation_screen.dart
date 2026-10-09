@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../constants/app_theme.dart';
 import '../services/captain_ride_service.dart';
 import '../services/captain_socket_service.dart';
+import '../widgets/google_map_widget.dart';
 
 class CaptainNavigationScreen extends StatefulWidget {
   final Map<String, dynamic>? ride;
@@ -212,22 +214,13 @@ class _CaptainNavigationScreenState extends State<CaptainNavigationScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Map Canvas
-          Container(
-            color: const Color(0xFFE8DEFA),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.two_wheeler, color: AppTheme.primaryPurple, size: 58),
-                  const SizedBox(height: 8),
-                  Text(
-                    _rideStage == 'STARTED' ? "Live Trip Navigation (To Drop Location)" : "Navigating to Passenger Pickup",
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryPurple),
-                  ),
-                ],
-              ),
-            ),
+          // Live Google Map Navigation Canvas
+          const GoogleMapWidget(
+            initialCenter: LatLng(12.9716, 77.5946),
+            initialZoom: 15.5,
+            vehicleLocation: LatLng(12.9480, 77.6180),
+            pickupLocation: LatLng(12.9352, 77.6245), // Koramangala
+            dropLocation: LatLng(12.9784, 77.6408), // Indiranagar
           ),
 
           // Top Directions Banner
