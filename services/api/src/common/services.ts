@@ -7,11 +7,13 @@ import Redis from 'ioredis';
 export class RedisService extends Redis {
   constructor() {
     super(process.env.REDIS_URL || 'redis://localhost:6379', {
-      maxRetriesPerRequest: null,
-      enableOfflineQueue: true,
-      retryStrategy: (times) => Math.min(times * 1000, 3000),
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      connectTimeout: 800,
+      commandTimeout: 800,
+      retryStrategy: () => null, // Do not endlessly reconnect when offline
     });
-    this.on('error', (err) => {
+    this.on('error', () => {
       // Suppress unhandled crash while Redis is offline
     });
   }

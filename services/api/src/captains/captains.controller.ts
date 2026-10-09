@@ -110,6 +110,88 @@ export class CaptainsService {
       include: { customer: true },
     });
   }
+
+  async getWallet(captainId: string) {
+    let wallet = await this.prisma.captainWallet.findUnique({
+      where: { captainId },
+      include: {
+        transactions: {
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        },
+      },
+    });
+
+    if (!wallet) {
+      wallet = await this.prisma.captainWallet.create({
+        data: {
+          captainId,
+          balancePaise: 0,
+          pendingPaise: 0,
+          lifetimeEarningsPaise: 0,
+        },
+        include: {
+          transactions: true,
+        },
+      });
+    }
+
+    return {
+      walletId: wallet.id,
+      captainId: wallet.captainId,
+      balancePaise: wallet.balancePaise,
+      balanceRupees: wallet.balancePaise / 100,
+      lifetimeEarningsPaise: wallet.lifetimeEarningsPaise,
+      lifetimeEarningsRupees: wallet.lifetimeEarningsPaise / 100,
+      transactions: wallet.transactions.map((t) => ({
+        ...t,
+        amountRupees: t.amountPaise / 100,
+      })),
+    };
+  }
+
+  async requestPayout(captainId: string, data: { amountPaise: number; upiId: string }) {
+    if (!data.upiId || !data.amountPaise) {
+      throw new BadRequestException('upiId and amountPaise are required');
+    }
+
+    if (data.amountPaise < 10000) {
+      throw new BadRequestException('Minimum payout withdrawal amount is ₹100 (10000 paise)');
+    }
+
+    const wallet = await this.prisma.captainWallet.findUnique({ where: { captainId } });
+    if (!wallet || wallet.balancePaise < data.amountPaise) {
+      throw new BadRequestException('Insufficient wallet balance');
+    }
+
+    const updated = await this.prisma.captainWallet.update({
+      where: { captainId },
+      data: {
+        balancePaise: { decrement: data.amountPaise },
+      },
+    });
+
+    const tx = await this.prisma.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'PAYOUT_WITHDRAWAL',
+        amountPaise: data.amountPaise,
+        status: 'COMPLETED',
+        referenceId: `payout_${Date.now()}_${data.upiId}`,
+      },
+    });
+
+    return {
+      success: true,
+      transactionId: tx.id,
+      referenceId: tx.referenceId,
+      withdrawnPaise: data.amountPaise,
+      withdrawnRupees: data.amountPaise / 100,
+      remainingBalancePaise: updated.balancePaise,
+      remainingBalanceRupees: updated.balancePaise / 100,
+      upiId: data.upiId,
+    };
+  }
 }
 
 @ApiTags('Captains')
@@ -152,5 +234,19 @@ export class CaptainsController {
   @ApiOperation({ summary: 'Fetch available pending ride requests' })
   getPendingRequests() {
     return this.captainsService.getPendingRequests();
+  }
+
+  @Get('wallet')
+  @Roles('captain')
+  @ApiOperation({ summary: 'Fetch captain earnings, wallet balance, and payout ledger' })
+  getWallet(@Req() req: any) {
+    return this.captainsService.getWallet(req.user.sub);
+  }
+
+  @Post('payout')
+  @Roles('captain')
+  @ApiOperation({ summary: 'Request instant UPI payout withdrawal of earnings' })
+  requestPayout(@Req() req: any, @Body() body: { amountPaise: number; upiId: string }) {
+    return this.captainsService.requestPayout(req.user.sub, body);
   }
 }

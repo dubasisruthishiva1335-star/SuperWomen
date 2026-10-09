@@ -2,13 +2,15 @@ import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaService, RedisService, AwsS3Service } from './common/services';
 import { AuthController } from './auth/auth.controller';
-import { RidesController, RidesService } from './rides/rides';
+import { RidesController, PublicRidesController, RidesService } from './rides/rides';
 import { PaymentsController, PaymentsService } from './payments/payments';
 import { AdminController } from './admin/admin.controller';
 import { SafetyController } from './safety/safety.controller';
 import { UsersController, UsersService } from './users/users.controller';
 import { CaptainsController, CaptainsService } from './captains/captains.controller';
 import { DispatchController, DispatchService } from './dispatch/dispatch.controller';
+import { CouponsController, CouponsService } from './coupons/coupons.controller';
+import { SupportController, SupportService } from './support/support.controller';
 import { RealtimeGateway } from './realtime/realtime.gateway';
 
 @Global()
@@ -26,7 +28,10 @@ import { RealtimeGateway } from './realtime/realtime.gateway';
     CaptainsController,
     DispatchController,
     RidesController,
+    PublicRidesController,
     PaymentsController,
+    CouponsController,
+    SupportController,
     AdminController,
     SafetyController,
   ],
@@ -40,6 +45,8 @@ import { RealtimeGateway } from './realtime/realtime.gateway';
     DispatchService,
     RidesService,
     PaymentsService,
+    CouponsService,
+    SupportService,
   ],
   exports: [PrismaService, RedisService, AwsS3Service, RealtimeGateway],
 })
