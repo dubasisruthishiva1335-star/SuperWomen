@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/rider_ride_service.dart';
 import '../services/rider_socket_service.dart';
@@ -17,9 +20,26 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   bool _isSearching = false;
   Map<String, dynamic>? _currentRide;
   final RiderSocketService _socketService = RiderSocketService();
+  final MapController _mapController = MapController();
 
   final TextEditingController _pickupController = TextEditingController(text: "Koramangala 80ft Rd, Bangalore");
   final TextEditingController _dropController = TextEditingController(text: "Indiranagar Metro Station");
+
+  LatLng _pickupLocation = const LatLng(12.9352, 77.6245); // Koramangala
+  LatLng _dropLocation = const LatLng(12.9784, 77.6408); // Indiranagar
+
+  double _estimatedKm = 5.2;
+  double _bikeFare = 185.0;
+  double _autoFare = 240.0;
+
+  // Autocomplete state
+  List<Map<String, dynamic>> _suggestions = [];
+  bool _isLoadingSuggestions = false;
+  String? _activeField; // 'pickup' | 'drop' | null
+  Timer? _debounceTimer;
+
+  // Pin tap mode
+  String _pinTapTarget = 'drop'; // 'pickup' | 'drop'
 
   @override
   void initState() {
@@ -35,18 +55,182 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         _showCaptainAssignedDialog(rideData);
       }
     };
+
+    _updateQuotes();
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    _pickupController.dispose();
+    _dropController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query, String field) {
+    _activeField = field;
+    _debounceTimer?.cancel();
+
+    if (query.trim().isEmpty) {
+      setState(() {
+        _suggestions = [];
+        _isLoadingSuggestions = false;
+      });
+      return;
+    }
+
+    setState(() => _isLoadingSuggestions = true);
+
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
+      final results = await RiderRideService.getAutocomplete(query);
+      if (mounted && _activeField == field) {
+        setState(() {
+          _suggestions = results;
+          _isLoadingSuggestions = false;
+        });
+      }
+    });
+  }
+
+  Future<void> _selectSuggestion(Map<String, dynamic> item) async {
+    final text = item['text'] as String? ?? '';
+    final placeId = item['placeId'] as String?;
+    double? lat = (item['lat'] as num?)?.toDouble();
+    double? lng = (item['lng'] as num?)?.toDouble();
+
+    if (lat == null || lng == null) {
+      final geocoded = await RiderRideService.geocode(placeId: placeId, address: text);
+      if (geocoded != null) {
+        lat = (geocoded['lat'] as num?)?.toDouble();
+        lng = (geocoded['lng'] as num?)?.toDouble();
+      }
+    }
+
+    lat ??= 12.9716;
+    lng ??= 77.5946;
+
+    final targetPoint = LatLng(lat, lng);
+
+    setState(() {
+      if (_activeField == 'pickup') {
+        _pickupController.text = text;
+        _pickupLocation = targetPoint;
+      } else {
+        _dropController.text = text;
+        _dropLocation = targetPoint;
+      }
+      _suggestions = [];
+      _activeField = null;
+    });
+
+    FocusScope.of(context).unfocus();
+    _mapController.move(targetPoint, 15.0);
+    _updateQuotes();
+  }
+
+  Future<void> _handleMapTap(LatLng point) async {
+    setState(() {
+      if (_pinTapTarget == 'pickup') {
+        _pickupLocation = point;
+        _pickupController.text = "Pinned Location (${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)})";
+      } else {
+        _dropLocation = point;
+        _dropController.text = "Pinned Location (${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)})";
+      }
+      _suggestions = [];
+      _activeField = null;
+    });
+
+    _mapController.move(point, _mapController.camera.zoom);
+    _updateQuotes();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 2),
+        backgroundColor: const Color(0xFF6A2CEA),
+        content: Text("📍 ${_pinTapTarget == 'pickup' ? 'Pickup' : 'Drop'} Pin updated to tapped spot!"),
+      ),
+    );
+  }
+
+  Future<void> _useCurrentLocation() async {
+    try {
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final currentPoint = LatLng(pos.latitude, pos.longitude);
+
+      setState(() {
+        _pickupLocation = currentPoint;
+        _pickupController.text = "Current GPS Location";
+        _suggestions = [];
+        _activeField = null;
+      });
+
+      _mapController.move(currentPoint, 15.5);
+      _updateQuotes();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Color(0xFF00C853),
+            content: Text("📍 Pickup set to your Current GPS Location!"),
+          ),
+        );
+      }
+    } catch (_) {
+      // Fallback
+      final currentPoint = const LatLng(12.9716, 77.5946);
+      setState(() {
+        _pickupLocation = currentPoint;
+        _pickupController.text = "Bangalore Central (GPS)";
+        _suggestions = [];
+        _activeField = null;
+      });
+      _mapController.move(currentPoint, 15.0);
+      _updateQuotes();
+    }
+  }
+
+  Future<void> _updateQuotes() async {
+    try {
+      final res = await RiderRideService.getQuotes(
+        pickupLat: _pickupLocation.latitude,
+        pickupLng: _pickupLocation.longitude,
+        dropLat: _dropLocation.latitude,
+        dropLng: _dropLocation.longitude,
+      );
+
+      final quotes = res['quotes'] as List<dynamic>? ?? [];
+      final dist = (res['distanceKm'] as num?)?.toDouble() ?? 5.2;
+
+      setState(() {
+        _estimatedKm = dist;
+        for (final q in quotes) {
+          if (q['vehicleType'] == 'BIKE') {
+            _bikeFare = (q['fare'] as num?)?.toDouble() ?? 185.0;
+          } else if (q['vehicleType'] == 'AUTO') {
+            _autoFare = (q['fare'] as num?)?.toDouble() ?? 240.0;
+          }
+        }
+      });
+    } catch (_) {}
   }
 
   Future<void> _startRideBooking() async {
     setState(() => _isSearching = true);
 
     try {
-      // 1. Send request to backend
       final ride = await RiderRideService.requestRide(
-        pickupLat: 12.9716,
-        pickupLng: 77.5946,
-        dropLat: 12.9784,
-        dropLng: 77.6408,
+        pickupLat: _pickupLocation.latitude,
+        pickupLng: _pickupLocation.longitude,
+        dropLat: _dropLocation.latitude,
+        dropLng: _dropLocation.longitude,
+        vehicleType: selectedVehicle.toUpperCase(),
+        pickupAddress: _pickupController.text,
+        dropAddress: _dropController.text,
       );
 
       _currentRide = ride;
@@ -61,10 +245,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         );
       }
     } catch (e) {
-      // If offline/backend mock fallback
       _currentRide = {
         'id': 'simulated-ride-${DateTime.now().millisecondsSinceEpoch}',
-        'fare': selectedVehicle == 'bike' ? 185.0 : 240.0,
+        'fare': selectedVehicle == 'bike' ? _bikeFare : _autoFare,
         'otp': '4972',
       };
     }
@@ -87,7 +270,13 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Choose Ride Type", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Choose Ride Type", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                      Text("${_estimatedKm.toStringAsFixed(1)} km", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6A2CEA))),
+                    ],
+                  ),
                   const SizedBox(height: 14),
 
                   // SuperBike Option
@@ -96,7 +285,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     icon: "🛵",
                     title: "SuperBike",
                     subtitle: "Fastest · 2 min away",
-                    price: "₹185",
+                    price: "₹${_bikeFare.toInt()}",
                     isSelected: selectedVehicle == 'bike',
                     onTap: () => setSheetState(() => selectedVehicle = 'bike'),
                   ),
@@ -108,7 +297,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     icon: "🛺",
                     title: "SuperAuto",
                     subtitle: "Comfort · 4 min away",
-                    price: "₹240",
+                    price: "₹${_autoFare.toInt()}",
                     isSelected: selectedVehicle == 'auto',
                     onTap: () => setSheetState(() => selectedVehicle = 'auto'),
                   ),
@@ -128,7 +317,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                         _startRideBooking();
                       },
                       child: Text(
-                        selectedVehicle == 'bike' ? "Book SuperBike (₹185) 🚀" : "Book SuperAuto (₹240) 🚀",
+                        selectedVehicle == 'bike' ? "Book SuperBike (₹${_bikeFare.toInt()}) 🚀" : "Book SuperAuto (₹${_autoFare.toInt()}) 🚀",
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
                       ),
                     ),
@@ -248,49 +437,148 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Interactive Google Map View
-          const GoogleMapWidget(
-            initialCenter: LatLng(12.9716, 77.5946),
+          // Interactive Google Map View with Tap-to-Pin
+          GoogleMapWidget(
+            mapController: _mapController,
+            initialCenter: const LatLng(12.9716, 77.5946),
             initialZoom: 14.5,
-            pickupLocation: LatLng(12.9352, 77.6245), // Koramangala 80ft Rd
-            dropLocation: LatLng(12.9784, 77.6408), // Indiranagar Metro
-            vehicleLocation: LatLng(12.9480, 77.6180), // Nearby SuperWomen Captain
+            pickupLocation: _pickupLocation,
+            dropLocation: _dropLocation,
+            vehicleLocation: const LatLng(12.9480, 77.6180), // Nearby SuperWomen Captain
             vehicleType: 'BIKE',
+            onMapTap: _handleMapTap,
           ),
 
-          // Top Header
+          // Top Header & Pin Selector Pill
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(100),
-                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
-                    ),
-                    child: const Row(
-                      children: [
-                        Text("🛡️", style: TextStyle(fontSize: 16)),
-                        SizedBox(width: 6),
-                        Text("100% Women-Safe Rides", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF6A2CEA))),
-                      ],
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(100),
+                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                        ),
+                        child: const Row(
+                          children: [
+                            Text("🛡️", style: TextStyle(fontSize: 16)),
+                            SizedBox(width: 6),
+                            Text("100% Women-Safe Rides", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF6A2CEA))),
+                          ],
+                        ),
+                      ),
+                      CircleAvatar(
+                        backgroundColor: Colors.white,
+                        child: IconButton(
+                          icon: const Icon(Icons.person, color: Color(0xFF6A2CEA)),
+                          onPressed: () {},
+                        ),
+                      ),
+                    ],
                   ),
-                  CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: IconButton(
-                      icon: const Icon(Icons.person, color: Color(0xFF6A2CEA)),
-                      onPressed: () {},
+                  const SizedBox(height: 8),
+                  // Map Pin Mode Indicator
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text("Tap Map to Pin: ", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black87)),
+                        GestureDetector(
+                          onTap: () => setState(() => _pinTapTarget = 'pickup'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: _pinTapTarget == 'pickup' ? const Color(0xFF00C853) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text("Pickup", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _pinTapTarget == 'pickup' ? Colors.white : const Color(0xFF00C853))),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: () => setState(() => _pinTapTarget = 'drop'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: _pinTapTarget == 'drop' ? const Color(0xFFFF334B) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text("Drop", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _pinTapTarget == 'drop' ? Colors.white : const Color(0xFFFF334B))),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
           ),
+
+          // Autocomplete Suggestions Floating Dropdown
+          if (_suggestions.isNotEmpty || _isLoadingSuggestions) ...[
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 230,
+              child: Material(
+                elevation: 8,
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  constraints: const BoxConstraints(maxHeight: 220),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _isLoadingSuggestions
+                      ? const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF6A2CEA))),
+                                SizedBox(width: 12),
+                                Text("Searching areas & transit hubs...", style: TextStyle(fontSize: 13, color: Color(0xFF635777))),
+                              ],
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: _suggestions.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, i) {
+                            final item = _suggestions[i];
+                            return ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.location_on, color: Color(0xFF6A2CEA), size: 20),
+                              title: Text(
+                                item['text'] ?? '',
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              ),
+                              trailing: const Icon(Icons.north_west, size: 14, color: Colors.black38),
+                              onTap: () => _selectSuggestion(item),
+                            );
+                          },
+                        ),
+                ),
+              ),
+            ),
+          ],
 
           // Searching Pulsing Card (When ride is dispatched)
           if (_isSearching) ...[
@@ -313,10 +601,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      "Connecting with nearby women drivers on 80ft Road",
+                    Text(
+                      "Connecting with nearby women drivers on ${_pickupController.text.split(',').first}",
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                     const SizedBox(height: 20),
                     Row(
@@ -329,7 +617,6 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        // Test instant simulate accept
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6A2CEA)),
@@ -338,7 +625,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                               _showCaptainAssignedDialog({
                                 'id': _currentRide?['id'] ?? 'mock-ride',
                                 'otp': '4972',
-                                'fare': 185.0,
+                                'fare': selectedVehicle == 'bike' ? _bikeFare : _autoFare,
                               });
                             },
                             child: const Text("Simulate Accept", style: TextStyle(color: Colors.white, fontSize: 11)),
@@ -359,7 +646,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
               left: 16,
               right: 16,
               child: Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -368,7 +655,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Pickup input
+                    // Pickup input with current location button
                     Row(
                       children: [
                         const Icon(Icons.circle, color: Color(0xFF00C853), size: 14),
@@ -377,12 +664,26 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                           child: TextField(
                             controller: _pickupController,
                             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                            decoration: const InputDecoration(border: InputBorder.none, isDense: true),
+                            decoration: InputDecoration(
+                              hintText: "Enter pickup area or transit hub...",
+                              border: InputBorder.none,
+                              isDense: true,
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.my_location, color: Color(0xFF6A2CEA), size: 18),
+                                tooltip: "Use Current GPS Location",
+                                onPressed: _useCurrentLocation,
+                              ),
+                            ),
+                            onChanged: (val) => _onSearchChanged(val, 'pickup'),
+                            onTap: () {
+                              _pinTapTarget = 'pickup';
+                              _onSearchChanged(_pickupController.text, 'pickup');
+                            },
                           ),
                         ),
                       ],
                     ),
-                    const Divider(height: 16),
+                    const Divider(height: 12),
                     // Drop input
                     Row(
                       children: [
@@ -392,12 +693,21 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                           child: TextField(
                             controller: _dropController,
                             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                            decoration: const InputDecoration(border: InputBorder.none, isDense: true),
+                            decoration: const InputDecoration(
+                              hintText: "Enter destination drop location...",
+                              border: InputBorder.none,
+                              isDense: true,
+                            ),
+                            onChanged: (val) => _onSearchChanged(val, 'drop'),
+                            onTap: () {
+                              _pinTapTarget = 'drop';
+                              _onSearchChanged(_dropController.text, 'drop');
+                            },
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -407,7 +717,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
                         onPressed: _showBookingSheet,
-                        child: const Text("Choose SuperRide (From ₹50) 🛵", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+                        child: Text(
+                          "Choose SuperRide (₹${_bikeFare.toInt()} · ${_estimatedKm.toStringAsFixed(1)}km) 🛵",
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
                       ),
                     ),
                   ],

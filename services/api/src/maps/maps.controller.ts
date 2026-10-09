@@ -5,16 +5,21 @@ import { ApiOperation, ApiTags, ApiQuery } from '@nestjs/swagger';
 @Controller(['maps', 'v1/maps'])
 export class MapsController {
   private readonly defaultPlaces = [
-    { placeId: 'blr-kor-01', text: 'Koramangala 80ft Road, Bangalore' },
-    { placeId: 'blr-ind-02', text: 'Indiranagar 100ft Road Metro, Bangalore' },
-    { placeId: 'blr-hms-03', text: 'HSR Layout Sector 2, Bangalore' },
-    { placeId: 'blr-wfd-04', text: 'Whitefield ITPL Main Road, Bangalore' },
-    { placeId: 'blr-mg-05', text: 'MG Road Metro Station, Bangalore' },
-    { placeId: 'hyd-hit-06', text: 'Hitech City Cyber Towers, Hyderabad' },
-    { placeId: 'hyd-gac-07', text: 'Gachibowli Financial District, Hyderabad' },
-    { placeId: 'hyd-jub-08', text: 'Jubilee Hills Road No. 36, Hyderabad' },
-    { placeId: 'del-cp-09', text: 'Connaught Place Radial Road, New Delhi' },
-    { placeId: 'del-cyb-10', text: 'DLF Cyber City Cyber Hub, Gurgaon' },
+    { placeId: 'blr-kor-01', text: 'Koramangala 80ft Road, Bangalore', lat: 12.9352, lng: 77.6245 },
+    { placeId: 'blr-ind-02', text: 'Indiranagar 100ft Road Metro, Bangalore', lat: 12.9784, lng: 77.6408 },
+    { placeId: 'blr-hms-03', text: 'HSR Layout Sector 2, Bangalore', lat: 12.9121, lng: 77.6446 },
+    { placeId: 'blr-wfd-04', text: 'Whitefield ITPL Main Road, Bangalore', lat: 12.9856, lng: 77.7317 },
+    { placeId: 'blr-mg-05', text: 'MG Road Metro Station, Bangalore', lat: 12.9756, lng: 77.6066 },
+    { placeId: 'blr-jyn-06', text: 'Jayanagar 4th Block Complex, Bangalore', lat: 12.9299, lng: 77.5838 },
+    { placeId: 'blr-byl-07', text: 'BTM Layout 2nd Stage, Bangalore', lat: 12.9166, lng: 77.6101 },
+    { placeId: 'blr-jp-08', text: 'JP Nagar 6th Phase, Bangalore', lat: 12.9063, lng: 77.5855 },
+    { placeId: 'blr-mll-09', text: 'Malleswaram 8th Cross, Bangalore', lat: 12.9982, lng: 77.5703 },
+    { placeId: 'blr-heb-10', text: 'Hebbal Manyata Tech Park, Bangalore', lat: 13.0475, lng: 77.6212 },
+    { placeId: 'hyd-hit-11', text: 'Hitech City Cyber Towers, Hyderabad', lat: 17.4504, lng: 78.3808 },
+    { placeId: 'hyd-gac-12', text: 'Gachibowli Financial District, Hyderabad', lat: 17.4401, lng: 78.3489 },
+    { placeId: 'hyd-jub-13', text: 'Jubilee Hills Road No. 36, Hyderabad', lat: 17.4325, lng: 78.4073 },
+    { placeId: 'del-cp-14', text: 'Connaught Place Radial Road, New Delhi', lat: 28.6315, lng: 77.2167 },
+    { placeId: 'del-cyb-15', text: 'DLF Cyber City Cyber Hub, Gurgaon', lat: 28.4950, lng: 77.0895 },
   ];
 
   @Get('autocomplete')

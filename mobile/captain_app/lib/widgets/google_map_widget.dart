@@ -12,6 +12,8 @@ class GoogleMapWidget extends StatefulWidget {
   final String? vehicleType;
   final bool showTraffic;
   final VoidCallback? onRecenter;
+  final void Function(LatLng)? onMapTap;
+  final MapController? mapController;
 
   const GoogleMapWidget({
     super.key,
@@ -24,6 +26,8 @@ class GoogleMapWidget extends StatefulWidget {
     this.vehicleType = 'BIKE',
     this.showTraffic = false,
     this.onRecenter,
+    this.onMapTap,
+    this.mapController,
   });
 
   @override
@@ -36,7 +40,7 @@ class _GoogleMapWidgetState extends State<GoogleMapWidget> {
   @override
   void initState() {
     super.initState();
-    _mapController = MapController();
+    _mapController = widget.mapController ?? MapController();
   }
 
   void _recenter() {
@@ -155,6 +159,11 @@ class _GoogleMapWidgetState extends State<GoogleMapWidget> {
             initialZoom: widget.initialZoom,
             minZoom: 4,
             maxZoom: 18,
+            onTap: (tapPosition, point) {
+              if (widget.onMapTap != null) {
+                widget.onMapTap!(point);
+              }
+            },
           ),
           children: [
             // Google Maps Roadmap Tiles

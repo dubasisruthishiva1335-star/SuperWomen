@@ -105,6 +105,37 @@ class RiderRideService {
     );
   }
 
+  /// Search Google Places Autocomplete predictions
+  static Future<List<Map<String, dynamic>>> getAutocomplete(String query) async {
+    if (query.trim().isEmpty) return [];
+    try {
+      final res = await http.get(
+        Uri.parse('$apiUrl/v1/maps/autocomplete?q=${Uri.encodeComponent(query.trim())}'),
+        headers: await _headers(),
+      );
+      if (res.statusCode < 400) {
+        final List<dynamic> list = jsonDecode(res.body);
+        return list.map((item) => Map<String, dynamic>.from(item)).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  /// Geocode placeId or address to coordinates
+  static Future<Map<String, dynamic>?> geocode({String? placeId, String? address}) async {
+    try {
+      final queryParams = <String, String>{};
+      if (placeId != null) queryParams['placeId'] = placeId;
+      if (address != null) queryParams['address'] = address;
+      final uri = Uri.parse('$apiUrl/v1/maps/geocode').replace(queryParameters: queryParams);
+      final res = await http.get(uri, headers: await _headers());
+      if (res.statusCode < 400) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   /// Trigger emergency SOS with live GPS
   static Future<void> triggerSos(String rideId, double lat, double lng) async {
     final res = await http.post(
